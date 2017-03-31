@@ -26,9 +26,9 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         return helloBack;
     }
     @Override
-    public void NormalHeartBeat(HeartBeatMessage h) throws RemoteException {
+    public void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
         HeartBeatMessage mesg = h;
-        System.out.println("[Recieve NormalHeartBeat] " + mesg);
+        System.out.println("[Recieve LeaderHeartBeat] " + mesg);
         return;
     }
 
