@@ -48,6 +48,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      *
      */
      //TODO:accpetor should forward request to leader
+     //RPC leader add to queue
     @Override
     public synchronized String clientRequest(String st) throws RemoteException {
         String response;

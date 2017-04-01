@@ -88,6 +88,8 @@ public class LeaderRoutine implements Runnable {
         }
         if (this.currentRound.getAcceptCount() >= this.majority) {
             System.out.println("[LeaderRoutine] Majority ACK!");
+            //TODO: 新建一个round instance 修改指针
+            //TODO: export accept to a file (txt)
         }
     }
 

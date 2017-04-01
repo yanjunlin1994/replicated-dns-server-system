@@ -1,4 +1,7 @@
-
+/**
+ * Acceptor routine
+ *
+ */
 public class AcceptorRoutine implements Runnable {
     private int myID;
     private Configuration myConfig;
