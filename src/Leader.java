@@ -1,4 +1,6 @@
 import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Property of a leader
  * 
@@ -7,11 +9,11 @@ import java.util.ArrayDeque;
 public class Leader {
     private int status;
     private int ID;
-    private ArrayDeque<Proposal> processQueue;
+    private Queue<Proposal> processQueue;
     public Leader () {
         this.status = -1;
         this.ID = -1;
-        this.processQueue = new ArrayDeque<Proposal>();
+        this.processQueue = new LinkedBlockingQueue<Proposal>();
     }
     public Leader (int lid) {
         this.status = -1;
@@ -29,8 +31,17 @@ public class Leader {
     public void setID(int iD) {
         this.ID = iD;
     }
-    public ArrayDeque<Proposal> getProcessQueue() {
-        return this.processQueue;
+    public int getProcessQueueSize() {
+        if (this.processQueue == null) {
+            return 0;
+        }
+        return this.processQueue.size();
+    }
+    public void addNewProposal(Proposal p) {
+        this.processQueue.offer(p);  
+    }
+    public Proposal pollProposal() {
+        return this.processQueue.poll();
     }
     /**
      * clean the informaton in leader

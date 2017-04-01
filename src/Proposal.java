@@ -1,19 +1,29 @@
+import java.io.Serializable;
 
-public class Proposal {
-    private String content;
-    public Proposal(String c) {
-        this.content = c;
+public class Proposal implements Serializable {
+    private int ID;
+    private String value;
+    public Proposal(int i, String c) {
+        this.ID = i;
+        this.value = c;
     }
-    public String getContent() {
-        return content;
+    
+    public int getID() {
+        return this.ID;
     }
-    public void setContent(String content) {
-        this.content = content;
+
+    public void setID(int iD) {
+        this.ID = iD;
+    }
+
+    public String getValue() {
+        return this.value;
+    }
+    public void setValue(String v) {
+        this.value = v;
     }
     @Override
     public String toString() { 
-        return "This is a proposal " + this.content;
+        return "[Proposal ID." + this.ID + " " + this.value + "]";
     }
-    
-
 }

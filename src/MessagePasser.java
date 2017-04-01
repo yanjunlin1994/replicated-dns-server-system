@@ -17,6 +17,7 @@ public class MessagePasser {
     private int myID;
     private ListenerImpl listener;
     private Leader currentLeader;
+    private AcceptorContent myAcceptorContent;
 //    private DebugLog mylog;
     public MessagePasser(String configuration_filename, int ID) {
         this.myConfig = new Configuration(configuration_filename);
@@ -24,11 +25,12 @@ public class MessagePasser {
         this.me = this.myConfig.getNodeMap().get(ID);  
 //        this.mylog = new DebugLog(me.getNodeID());
         this.currentLeader = new Leader();
+        this.myAcceptorContent = new AcceptorContent();
         /*
          * Start RPC listener
          */
         try {
-            this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader);
+            this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader, this.myAcceptorContent);
             LocateRegistry.createRegistry(Integer.valueOf(this.me.getPort()));
             Naming.rebind("//localhost:" + this.me.getPort() + "/Listener" + me.getNodeID(), listener);
             System.out.println("Listener " + this.myID + " is listening on port:" + this.me.getPort());
@@ -43,7 +45,7 @@ public class MessagePasser {
      * @throws InterruptedException
      */
     public void runNow() throws InterruptedException {
-        TimeUnit.SECONDS.sleep(15); //wait for other DNS replicas join in
+        TimeUnit.SECONDS.sleep(10); //wait for other DNS replicas join in
         
         this.myConfig.updateListenerIntfMap(this.myID);
         
@@ -76,16 +78,4 @@ public class MessagePasser {
         }
         System.out.println("[LeaderElectionSection] leader is:" + this.currentLeader);        
     }
-//    public void MulticastToEveryNode() {
-//        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
-//            try {
-//                HeartBeatMessage hbmessage = new HeartBeatMessage(this.myID, "testhb", "testhb :D");
-//                lisnode.NormalHeartBeat(hbmessage);  
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            
-//        }
-//    }
- 
 }

@@ -1,4 +1,4 @@
-
+import java.util.ArrayDeque;
 /**
  * Node class.
  */
@@ -6,13 +6,14 @@ public class Node {
     private int nodeID;
     private String ip;
     private int port;
-    private boolean ifLeader;
+    /* proposal number set (like 1, 11, 21, ...) */
+    private ArrayDeque<Integer> proposalNumSet;
    
     public Node(int id, String i, int prt) {
         this.nodeID = id;
         this.ip = i;
         this.port = prt;
-        this.ifLeader = false;
+        this.proposalNumSet = new ArrayDeque<Integer>();
     }
 
     public int getNodeID() {
@@ -38,14 +39,14 @@ public class Node {
     public void setPort(int port) {
         this.port = port;
     }
-
-    public boolean isIfLeader() {
-        return ifLeader;
+    public void addProposalNum(int k) {
+        this.proposalNumSet.offer(k);  
+    }
+    public int pollProposalNum() {
+        return this.proposalNumSet.poll();
     }
 
-    public void setIfLeader(boolean ifLeader) {
-        this.ifLeader = ifLeader;
-    }
+    
     @Override
     public String toString() { 
         return "I am Node " + this.nodeID;

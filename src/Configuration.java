@@ -39,6 +39,20 @@ public class Configuration {
                                     (int)node.get("port"));
             this.nodeMap.put((int)node.get("id"),newNode);     
         }
+        this.updateProposalNumSet();
+    } 
+    /**
+     * Update the proposal number set of each node
+     */
+    public void updateProposalNumSet() {
+        int base  = 0;
+        for (Node nd : this.nodeMap.values()) {
+           for (int i = 0; i < 10; i++) {
+               nd.addProposalNum(base + nd.getNodeID());
+               base += 10;
+           }
+           base = 0;
+        }
     }
     /**
      * Update the configuration file to include the listener for all other nodes. 

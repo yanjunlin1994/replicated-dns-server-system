@@ -17,8 +17,8 @@ public class LeaderHeartBeat implements Runnable {
         try {            
             HeartBeatMessage hbm = new HeartBeatMessage(this.myID, "leader heartbeat", "I am alive :)");
             while (true) {
-                TimeUnit.SECONDS.sleep(20); //send heartbeat messsage every 20 seconds
-                this.MulticastToEveryNode(hbm);
+                TimeUnit.SECONDS.sleep(10); //send heartbeat messsage every 20 seconds
+                this.MulticastLeaderHeartBeat(hbm);
                 hbm.increSeqNum();
             }  
         } catch (InterruptedException e) {
@@ -26,7 +26,7 @@ public class LeaderHeartBeat implements Runnable {
 //            e.printStackTrace();
         }        
     }
-    public void MulticastToEveryNode(HeartBeatMessage hbmessage) {
+    public void MulticastLeaderHeartBeat(HeartBeatMessage hbmessage) {
         for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
             try {
                 lisnode.LeaderHeartBeat(hbmessage);  
