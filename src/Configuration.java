@@ -37,7 +37,7 @@ public class Configuration {
         for (HashMap<Integer, Object> node : nodes){
             Node newNode = new Node((int)node.get("id"), (String)node.get("ip"),
                                     (int)node.get("port"));
-            this.nodeMap.put((int)node.get("id"),newNode);     
+            this.nodeMap.put((int)node.get("id"),newNode); //put node in nodemap   
         }
         this.updateProposalNumSet();
     } 
@@ -46,8 +46,9 @@ public class Configuration {
      */
     public void updateProposalNumSet() {
         int base  = 0;
+        int proposalNum = 10;
         for (Node nd : this.nodeMap.values()) {
-           for (int i = 0; i < 10; i++) {
+           for (int i = 0; i < proposalNum; i++) {
                nd.addProposalNum(base + nd.getNodeID());
                base += 10;
            }
@@ -85,7 +86,7 @@ public class Configuration {
      * @return next leader's ID
      */
     public int getNextLeader(int currentLeader) {
-        int nextID = (currentLeader + 1) / nodeMap.size();
+        int nextID = (currentLeader + 1) % nodeMap.size();
         return this.nodeMap.get(nextID).getNodeID();   
     }
     public HashMap<Integer, ListenerIntf> getListenerIntfMap() {

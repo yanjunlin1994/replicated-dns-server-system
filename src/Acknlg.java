@@ -50,7 +50,7 @@ public class Acknlg implements Serializable {
 
     @Override
     public String toString() { 
-        return "[" + this.ifrealAcknlg + " Promise ID." + this.ID + " " + this.value + "]";
+        return "[" + this.ifrealAcknlg + " ack ID." + this.ID + " " + this.value + "]";
     }
 
 }

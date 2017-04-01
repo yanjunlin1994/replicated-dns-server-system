@@ -1,7 +1,10 @@
 import java.util.HashMap;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
-
+/**
+ * ALL Information in a single Round
+ *
+ */
 public class Round {
     private int nodeID;
     private Proposal currentProposal;
@@ -106,10 +109,14 @@ public class Round {
     public void increAcceptCount() {
         this.acceptCount = this.acceptCount + 1;
     }
+    /**
+     * 
+     * @return
+     */
     public String findPromiseMaxIDValue() {
         int maxsrc = 0;
         for (Promise p : this.promiseMap.values()) {
-            if ((this.promiseMap.get(maxsrc) == null) && 
+            if ((this.promiseMap.get(maxsrc) == null) || 
                     (p.getID() > (this.promiseMap.get(maxsrc)).getID())) {
                 maxsrc = p.getSrc();
             }

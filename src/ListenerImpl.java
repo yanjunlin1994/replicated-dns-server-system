@@ -39,11 +39,15 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
         HeartBeatMessage mesg = h;
         System.out.println("[Recieve LeaderHeartBeat] " + mesg);
+        //TODO:
+        //if an acceptor doesn't receive heartbeat message from leader for xx seconds. Elect a new leader
         return;
     }
     /**
      * Receive client request
+     *
      */
+     //TODO:accpetor should forward request to leader
     @Override
     public synchronized String clientRequest(String st) throws RemoteException {
         String response;
@@ -51,7 +55,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         System.out.println("[check current leader: " + this.currentLeader.getID() + "]");
         if (me.getNodeID() == this.currentLeader.getID()) {
             response = "[ I am leader, I can handle this request]";
-            int newProposalNum = this.me.pollProposalNum();
+            int newProposalNum = this.myConfig.getNodeMap().get(me.getNodeID()).pollProposalNum();
             System.out.println("[Recieve clientRequest] handle this request newProposalNum " + newProposalNum);
             Proposal np = new Proposal(newProposalNum, st);
             this.currentLeader.addNewProposal(np);
@@ -94,7 +98,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
         System.out.println("[Recieve LeaderAcceptProposal] " + a);
         Acknlg ack = new Acknlg(this.me.getNodeID(), this.myAcceptorContent.getMinProposal());
-        if (a.getID() > this.myAcceptorContent.getMinProposal()) {
+        if (a.getID() >= this.myAcceptorContent.getMinProposal()) {
             this.myAcceptorContent.setAcceptedProposal(a.getID());
             this.myAcceptorContent.setAcceptedValue(a.getValue());
             System.out.println("[Recieve LeaderAcceptProposal ACK! ]");

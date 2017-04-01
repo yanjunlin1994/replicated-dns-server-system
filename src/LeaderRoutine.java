@@ -30,6 +30,11 @@ public class LeaderRoutine implements Runnable {
             }
         }
     }
+    /**
+     * Receive a new proposal.
+     * add proposal to Round.
+     * enter prepare stage.
+     */
     public synchronized void ReceiveNewProposal() {
         System.out.println("[LeaderRoutine] have a new proposal!");
         Proposal np = this.currentLeader.pollProposal(); 
@@ -50,7 +55,7 @@ public class LeaderRoutine implements Runnable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+        } //end receiving promises
         if (this.currentRound.getPromiseCount() >= this.majority) {
             System.out.println("[LeaderRoutine] prepare Majority Achieved!");
             String modifiedValue = this.currentRound.findPromiseMaxIDValue();
@@ -75,7 +80,7 @@ public class LeaderRoutine implements Runnable {
                 this.currentRound.addAcknlgMap(ack);// add to ack map
                 System.out.println("[LeaderRoutine] ack Recived: " + ack);
                 if (ack.getIsIfrealAcknlg()) {
-                    this.currentRound.increAcceptCount();;
+                    this.currentRound.increAcceptCount();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
