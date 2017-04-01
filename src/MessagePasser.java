@@ -16,20 +16,19 @@ public class MessagePasser {
     private Node me;
     private int myID;
     private ListenerImpl listener;
-//    private LeaderElection leaderElect;
-    private int currentLeader;
+    private Leader currentLeader;
 //    private DebugLog mylog;
     public MessagePasser(String configuration_filename, int ID) {
         this.myConfig = new Configuration(configuration_filename);
         this.myID = ID;
         this.me = this.myConfig.getNodeMap().get(ID);  
 //        this.mylog = new DebugLog(me.getNodeID());
-        this.currentLeader = -1;
+        this.currentLeader = new Leader();
         /*
          * Start RPC listener
          */
         try {
-            this.listener = new ListenerImpl(this.myConfig, this.me);
+            this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader);
             LocateRegistry.createRegistry(Integer.valueOf(this.me.getPort()));
             Naming.rebind("//localhost:" + this.me.getPort() + "/Listener" + me.getNodeID(), listener);
             System.out.println("Listener " + this.myID + " is listening on port:" + this.me.getPort());
@@ -44,32 +43,35 @@ public class MessagePasser {
      * @throws InterruptedException
      */
     public void runNow() throws InterruptedException {
-        TimeUnit.SECONDS.sleep(10); //wait for other DNS replicas join in
+        TimeUnit.SECONDS.sleep(15); //wait for other DNS replicas join in
         
         this.myConfig.updateListenerIntfMap(this.myID);
         
         TimeUnit.SECONDS.sleep(8);
+        this.LeaderElectionSection();
         
-        this.LeaderElectionSection(this.currentLeader);
-        
-        TimeUnit.SECONDS.sleep(8);
+        TimeUnit.SECONDS.sleep(3);
         /* open another thread to send heart beat message if I am leader */
-        if (this.currentLeader == this.myID) {
-            Thread myleaderRoutine = new Thread(new LeaderRoutine(this.myID, this.myConfig));
+        if (this.myID == this.currentLeader.getID()) {
+            Thread myleaderRoutine = new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader));
             myleaderRoutine.start();  
-        } else {
-            /* open another thread to receive heart beat message from leader if I am acceptor */
+        } 
+        /* open another thread to receive heart beat message from leader if I am acceptor */
+        else {
             Thread myAcceptorRoutine = new Thread(new AcceptorRoutine(this.myID, this.myConfig));
             myAcceptorRoutine.start();      
         }
     }
     /**
-     * Elect a new leader
+     * Elect a new leader according to id
      * @param currentld
      */
-    public void LeaderElectionSection(int currentld) {
-        this.currentLeader = this.myConfig.getNextLeader(currentld);
-        if (this.myID == this.currentLeader) {
+    public synchronized void LeaderElectionSection() {
+        int nextLeaderID = -1;
+        nextLeaderID = this.myConfig.getNextLeader(this.currentLeader.getID());
+        this.currentLeader.clean();
+        this.currentLeader.setID(nextLeaderID);
+        if (this.myID == nextLeaderID) {
             System.out.println("[LeaderElectionSection] I am the leader!"); 
         }
         System.out.println("[LeaderElectionSection] leader is:" + this.currentLeader);        

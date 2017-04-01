@@ -7,14 +7,12 @@ public class Node {
     private String ip;
     private int port;
     private boolean ifLeader;
-    private Leader nodeLeader;
    
     public Node(int id, String i, int prt) {
         this.nodeID = id;
         this.ip = i;
         this.port = prt;
         this.ifLeader = false;
-        this.nodeLeader = null;
     }
 
     public int getNodeID() {
@@ -48,12 +46,8 @@ public class Node {
     public void setIfLeader(boolean ifLeader) {
         this.ifLeader = ifLeader;
     }
-
-    public Leader getNodeLeader() {
-        return nodeLeader;
-    }
-
-    public void setNodeLeader(Leader nodeLeader) {
-        this.nodeLeader = nodeLeader;
+    @Override
+    public String toString() { 
+        return "I am Node " + this.nodeID;
     }
 }
