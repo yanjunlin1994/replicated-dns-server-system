@@ -1,4 +1,5 @@
-import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Node class.
  */
@@ -7,13 +8,13 @@ public class Node {
     private String ip;
     private int port;
     /* proposal number set (like 1, 11, 21, ...) */
-    private ArrayDeque<Integer> proposalNumSet;
+    private Queue<Integer> proposalNumSet;
    
     public Node(int id, String i, int prt) {
         this.nodeID = id;
         this.ip = i;
         this.port = prt;
-        this.proposalNumSet = new ArrayDeque<Integer>();
+        this.proposalNumSet = new LinkedBlockingQueue<Integer>();
     }
 
     public int getNodeID() {

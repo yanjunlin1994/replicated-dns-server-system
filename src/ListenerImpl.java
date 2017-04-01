@@ -72,16 +72,39 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     @Override
     public Promise LeaderPrepareProposal(Proposal p) throws RemoteException {
         System.out.println("[Recieve LeaderPrepareProposal] " + p);
-        Promise pro = new Promise(this.myAcceptorContent.getAcceptedProposal(), this.myAcceptorContent.getAcceptedValue());
+        Promise pro = new Promise(this.me.getNodeID(), this.myAcceptorContent.getAcceptedProposal(), this.myAcceptorContent.getAcceptedValue());
         if (p.getID() > this.myAcceptorContent.getMinProposal()) {
-            //set my id
+            //set my MinProposal number
             this.myAcceptorContent.setMinProposal(p.getID());
-            System.out.println("[Promise!]");
+            System.out.println("[Recieve LeaderPrepareProposal Promise!]    ");
+            System.out.println(this.myAcceptorContent);
             pro.setIfrealPromise(true);
             return pro;
         } else {
+            System.out.println("[Recieve LeaderPrepareProposal No promise : (  ]     ");
+            System.out.println(this.myAcceptorContent);
             return pro;
         }
         
+    }
+    /**
+     * Receive a accept from leader
+     */
+    @Override
+    public Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
+        System.out.println("[Recieve LeaderAcceptProposal] " + a);
+        Acknlg ack = new Acknlg(this.me.getNodeID(), this.myAcceptorContent.getMinProposal());
+        if (a.getID() > this.myAcceptorContent.getMinProposal()) {
+            this.myAcceptorContent.setAcceptedProposal(a.getID());
+            this.myAcceptorContent.setAcceptedValue(a.getValue());
+            System.out.println("[Recieve LeaderAcceptProposal ACK! ]");
+            System.out.println(this.myAcceptorContent);
+            ack.setIfrealAcknlg(true);
+            return ack;
+        } else {
+            System.out.println("[Recieve LeaderAcceptProposal no ack ]");
+            System.out.println(this.myAcceptorContent);
+            return ack;
+        }
     }
 }
