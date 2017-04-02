@@ -100,6 +100,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         System.out.println("[Recieve LeaderAcceptProposal] " + a);
         Acknlg ack = new Acknlg(this.me.getNodeID(), this.myAcceptorContent.getMinProposal());
         if (a.getID() >= this.myAcceptorContent.getMinProposal()) {
+            this.myAcceptorContent.setMinProposal(a.getID());
             this.myAcceptorContent.setAcceptedProposal(a.getID());
             this.myAcceptorContent.setAcceptedValue(a.getValue());
             System.out.println("[Recieve LeaderAcceptProposal ACK! ]");
