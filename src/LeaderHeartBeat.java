@@ -17,7 +17,7 @@ public class LeaderHeartBeat implements Runnable {
         try {            
             HeartBeatMessage hbm = new HeartBeatMessage(this.myID, "leader heartbeat", "I am alive :)");
             while (true) {
-                TimeUnit.SECONDS.sleep(10); //send heartbeat messsage every 20 seconds
+                TimeUnit.SECONDS.sleep(5); //send heartbeat messsage every 5 seconds
                 this.MulticastLeaderHeartBeat(hbm);
                 hbm.increSeqNum();
             }  
@@ -31,7 +31,7 @@ public class LeaderHeartBeat implements Runnable {
             try {
                 lisnode.LeaderHeartBeat(hbmessage);  
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("[LeaderRoutine] [LeaderHeartBeat] Someone close the connection");
             }
         }
     }

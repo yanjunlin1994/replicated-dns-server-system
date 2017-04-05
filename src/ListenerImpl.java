@@ -9,20 +9,20 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     private Node me;
     private Leader currentLeader;
     private AcceptorContent myAcceptorContent;
-    private CheckLeader checkLeader;
+    private AcceptorRoutine myAcceptorRoutine;
     /**
      * Constructor
      * @param config
      * @param m
      * @throws RemoteException
      */
-    protected ListenerImpl(Configuration config, Node m, Leader l, AcceptorContent acp, CheckLeader chkleader) throws RemoteException {
+    protected ListenerImpl(Configuration config, Node m, Leader l, AcceptorContent acp, AcceptorRoutine acpRoutine) throws RemoteException {
         super(0);
         this.myConfig = config;
         this.me = m;
         this.currentLeader = l;
         this.myAcceptorContent = acp;
-        this.checkLeader = chkleader;
+        this.myAcceptorRoutine = acpRoutine;
     }
     /**
      * Receive Hello message
@@ -41,7 +41,8 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
         HeartBeatMessage mesg = h;
         System.out.println("[Recieve LeaderHeartBeat] " + mesg);
-        checkLeader.addHeartbeat();
+        System.out.println("[Current HeartBeat Count] " + this.myAcceptorRoutine.getHeartbeatCount());
+        this.myAcceptorRoutine.addHeartbeat();
         //TODO:
         //if an acceptor doesn't receive heartbeat message from leader for xx seconds. Elect a new leader
         return;

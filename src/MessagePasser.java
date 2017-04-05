@@ -18,8 +18,7 @@ public class MessagePasser {
     private ListenerImpl listener;
     private Leader currentLeader;
     private AcceptorContent myAcceptorContent;
-    private CheckLeader chkLeader;
-    
+    private AcceptorRoutine myAcceptorRoutine;
 //    private DebugLog mylog;
     public MessagePasser(String configuration_filename, int ID) {
         this.myConfig = new Configuration(configuration_filename);
@@ -28,12 +27,12 @@ public class MessagePasser {
 //        this.mylog = new DebugLog(me.getNodeID());
         this.currentLeader = new Leader();
         this.myAcceptorContent = new AcceptorContent();
-        this.chkLeader = new CheckLeader(this.myID, this);
+	this.myAcceptorRoutine = new AcceptorRoutine(this.myID, this.myConfig, this);
         /*
          * Start RPC listener
          */
         try {
-            this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader, this.myAcceptorContent, this.chkLeader);
+            this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader, this.myAcceptorContent, this.myAcceptorRoutine);
             LocateRegistry.createRegistry(Integer.valueOf(this.me.getPort()));
             Naming.rebind("//localhost:" + this.me.getPort() + "/Listener" + me.getNodeID(), listener);
             System.out.println("Listener " + this.myID + " is listening on port:" + this.me.getPort());
@@ -63,10 +62,8 @@ public class MessagePasser {
         } 
         /* open another thread to receive heart beat message from leader if I am acceptor */
         else {
-            Thread myAcceptorRoutine = new Thread(new AcceptorRoutine(this.myID, this.myConfig));
+            Thread myAcceptorRoutine = new Thread(this.myAcceptorRoutine);
             myAcceptorRoutine.start();
-            Thread myAcceptorCheckLeader = new Thread(this.chkLeader);
-            myAcceptorCheckLeader.start();
         }
     }
     /**
