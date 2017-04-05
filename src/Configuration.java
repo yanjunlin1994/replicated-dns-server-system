@@ -40,6 +40,8 @@ public class Configuration {
                                     (int)node.get("port"));
             this.nodeMap.put((int)node.get("id"),newNode); //put node in nodemap   
         }
+        dnsFile = (String) data.get("dnsFile");
+        System.out.println("[Configuration] dns target path: " + dnsFile);
         this.updateProposalNumSet();
     } 
     /**

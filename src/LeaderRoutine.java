@@ -55,7 +55,7 @@ public class LeaderRoutine implements Runnable {
                     this.currentRound.increPromiseCount();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("[Leader Routine] [Prepare Stage] Someone loses connection");
             }
         } //end receiving promises
         if (this.currentRound.getPromiseCount() >= this.majority) {

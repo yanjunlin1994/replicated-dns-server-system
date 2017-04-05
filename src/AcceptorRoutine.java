@@ -37,7 +37,7 @@ public class AcceptorRoutine implements Runnable {
 			    if (leaderID == this.myID) {
 	  		        Thread myleaderRoutine = new Thread(new LeaderRoutine(this.myID, this.myConfig, new Leader()));
 	                myleaderRoutine.start();
-//				    break;
+				    break;
 			    }
 		    }
 			prevHeartbeat = this.heartbeatCount;

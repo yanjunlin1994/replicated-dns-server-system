@@ -68,10 +68,9 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         } else {
             if (this.currentLeader.getID() == -1) {
                 response = "[ We haven't elect a leader yet ]";
-                return response;
             } else {
             	/* If client sends request to the acceptor, acceptor forward the request to leader. */
-            	myConfig.getListenerIntfMap().get(currentLeader).clientRequest(st);
+            	myConfig.getListenerIntfMap().get(currentLeader.getID()).clientRequest(st);
 //              response = "[ I am not leader, I can't handle this request, forward it to leader " + this.currentLeader.getID() +"]";
             	response = "[ I am not leader, I will forward your request to the leader " + this.currentLeader.getID() + "]";
             }
