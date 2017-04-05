@@ -9,18 +9,20 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     private Node me;
     private Leader currentLeader;
     private AcceptorContent myAcceptorContent;
+    private CheckLeader checkLeader;
     /**
      * Constructor
      * @param config
      * @param m
      * @throws RemoteException
      */
-    protected ListenerImpl(Configuration config, Node m, Leader l, AcceptorContent acp) throws RemoteException {
+    protected ListenerImpl(Configuration config, Node m, Leader l, AcceptorContent acp, CheckLeader chkleader) throws RemoteException {
         super(0);
         this.myConfig = config;
         this.me = m;
         this.currentLeader = l;
         this.myAcceptorContent = acp;
+        this.checkLeader = chkleader;
     }
     /**
      * Receive Hello message
@@ -39,6 +41,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
         HeartBeatMessage mesg = h;
         System.out.println("[Recieve LeaderHeartBeat] " + mesg);
+        checkLeader.addHeartbeat();
         //TODO:
         //if an acceptor doesn't receive heartbeat message from leader for xx seconds. Elect a new leader
         return;
@@ -55,19 +58,22 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         System.out.println("[Recieve clientRequest] " + st);
         System.out.println("[check current leader: " + this.currentLeader.getID() + "]");
         if (me.getNodeID() == this.currentLeader.getID()) {
+        	/* Once receiving a new request, leader adds the request into the processQueue. */
             response = "[ I am leader, I can handle this request]";
             int newProposalNum = this.myConfig.getNodeMap().get(me.getNodeID()).pollProposalNum();
             System.out.println("[Recieve clientRequest] handle this request newProposalNum " + newProposalNum);
             Proposal np = new Proposal(newProposalNum, st);
             this.currentLeader.addNewProposal(np);
-            
-            
         } else {
             if (this.currentLeader.getID() == -1) {
                 response = "[ We haven't elect a leader yet ]";
                 return response;
+            } else {
+            	/* If client sends request to the acceptor, acceptor forward the request to leader. */
+            	myConfig.getListenerIntfMap().get(currentLeader).clientRequest(st);
+//              response = "[ I am not leader, I can't handle this request, forward it to leader " + this.currentLeader.getID() +"]";
+            	response = "[ I am not leader, I will forward your request to the leader " + this.currentLeader.getID() + "]";
             }
-            response = "[ I am not leader, I can't handle this request, forward it to leader " + this.currentLeader.getID() +"]";
         }
         return response;
     }

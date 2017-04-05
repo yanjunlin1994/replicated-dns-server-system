@@ -18,6 +18,8 @@ public class MessagePasser {
     private ListenerImpl listener;
     private Leader currentLeader;
     private AcceptorContent myAcceptorContent;
+    private CheckLeader chkLeader;
+    
 //    private DebugLog mylog;
     public MessagePasser(String configuration_filename, int ID) {
         this.myConfig = new Configuration(configuration_filename);
@@ -26,11 +28,12 @@ public class MessagePasser {
 //        this.mylog = new DebugLog(me.getNodeID());
         this.currentLeader = new Leader();
         this.myAcceptorContent = new AcceptorContent();
+        this.chkLeader = new CheckLeader(this.myID, this);
         /*
          * Start RPC listener
          */
         try {
-            this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader, this.myAcceptorContent);
+            this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader, this.myAcceptorContent, this.chkLeader);
             LocateRegistry.createRegistry(Integer.valueOf(this.me.getPort()));
             Naming.rebind("//localhost:" + this.me.getPort() + "/Listener" + me.getNodeID(), listener);
             System.out.println("Listener " + this.myID + " is listening on port:" + this.me.getPort());
@@ -61,14 +64,16 @@ public class MessagePasser {
         /* open another thread to receive heart beat message from leader if I am acceptor */
         else {
             Thread myAcceptorRoutine = new Thread(new AcceptorRoutine(this.myID, this.myConfig));
-            myAcceptorRoutine.start();      
+            myAcceptorRoutine.start();
+            Thread myAcceptorCheckLeader = new Thread(this.chkLeader);
+            myAcceptorCheckLeader.start();
         }
     }
     /**
      * Elect a new leader according to id
      * @param currentld
      */
-    public synchronized void LeaderElectionSection() {
+    public synchronized int LeaderElectionSection() {
         int nextLeaderID = -1;
         nextLeaderID = this.myConfig.getNextLeader(this.currentLeader.getID());
         this.currentLeader.clean();
@@ -76,6 +81,7 @@ public class MessagePasser {
         if (this.myID == nextLeaderID) {
             System.out.println("[LeaderElectionSection] I am the leader!"); 
         }
-        System.out.println("[LeaderElectionSection] leader is:" + this.currentLeader);        
+        System.out.println("[LeaderElectionSection] leader is:" + this.currentLeader);  
+        return nextLeaderID;
     }
 }

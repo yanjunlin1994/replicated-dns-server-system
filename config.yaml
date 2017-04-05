@@ -19,6 +19,8 @@ configuration :
 - id : 4
   ip   : 127.0.0.1
   port : 19871
+dnsFile :
+- path : 'dnsEntry.txt' 
 # This is the incoming port on which MP will listen
 # May be ephemeral for further communication as usual
 # sendRules :
