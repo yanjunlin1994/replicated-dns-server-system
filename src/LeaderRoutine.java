@@ -1,3 +1,5 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +56,7 @@ public class LeaderRoutine implements Runnable {
                     this.currentRound.increPromiseCount();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("[Leader Routine] [Prepare Stage] Someone loses connection");
             }
         } //end receiving promises
         if (this.currentRound.getPromiseCount() >= this.majority) {
@@ -82,17 +84,46 @@ public class LeaderRoutine implements Runnable {
                 System.out.println("[LeaderRoutine] ack Recived: " + ack);
                 if (ack.getIsIfrealAcknlg()) {
                     this.currentRound.increAcceptCount();
+                } else {
+                	this.currentRound.setRejAck();
+                	this.currentRound.addRejAcknlg(acp.getID(), acp.getValue());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        if (this.currentRound.getAcceptCount() >= this.majority) {
+        /* check if any reject, if yes, update the accept value and grab a new proposal number */
+        if (this.currentRound.getRejAck()) {
+        	int newProposalNum = this.myConfig.getNodeMap().get(myID).pollProposalNum();
+            System.out.println("[Recieve clientRequest] handle this request newProposalNum " + newProposalNum);
+            int maxId = -1;
+            for (int id : this.currentRound.getRejAcknlgMap().keySet()) {
+            	if (id > maxId) {
+            		maxId = id;
+            	}
+            }
+            Proposal np = new Proposal(newProposalNum, this.currentRound.getRejAcknlgMap().get(maxId));
+            this.prepare(np);
+        }
+        /* check if reach a consensus, if yes, export accept to a file, and create a new round instance. */
+        if (!this.currentRound.getRejAck() && this.currentRound.getAcceptCount() >= this.majority) {
             System.out.println("[LeaderRoutine] Majority ACK!");
+<<<<<<< HEAD
             //TODO:check if any reject, if yes, go back and grab a new proposal number
                    //randomize the delay before starting to avoid livelock
             //TODO: 新建一个round instance 修改指针
             //TODO: export accept to a file (txt)
+=======
+            FileWriter fw;
+            try {
+                fw = new FileWriter(myConfig.getDNSFile(),true); //the true will append the new data
+                fw.write(acp.getValue() + System.getProperty( "line.separator" ));//appends the string to the file
+                fw.close();
+            } catch(IOException ioe) {
+                System.err.println("IOException: " + ioe.getMessage());
+            }
+            this.currentRound = new Round(this.myID);
+>>>>>>> 61458281d74989fe99de6b018f0f1adff10e42b2
         }
     }
 

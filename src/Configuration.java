@@ -15,6 +15,7 @@ import java.util.List;
 public class Configuration {
     private HashMap<Integer,Node> nodeMap;
     private HashMap<Integer,ListenerIntf> ListenerIntfMap;
+    private String dnsFile;
     /**
      * Configuration constructor.
      * Construct nodeMap based on configuration file.
@@ -34,11 +35,13 @@ public class Configuration {
         Map<String, Object> data = (Map<String, Object>) yaml.load(IS); 
         //-------------nodes-----------
         List<HashMap<Integer, Object>> nodes = (List<HashMap<Integer, Object>> )data.get("configuration");
-        for (HashMap<Integer, Object> node : nodes){
+        for (HashMap<Integer, Object> node : nodes) {
             Node newNode = new Node((int)node.get("id"), (String)node.get("ip"),
                                     (int)node.get("port"));
             this.nodeMap.put((int)node.get("id"),newNode); //put node in nodemap   
         }
+        dnsFile = (String) data.get("dnsFile");
+        System.out.println("[Configuration] dns target path: " + dnsFile);
         this.updateProposalNumSet();
     } 
     /**
@@ -95,5 +98,7 @@ public class Configuration {
     public HashMap<Integer, Node> getNodeMap() {
         return this.nodeMap;
     }
-    
+    public String getDNSFile() {
+    	return this.dnsFile;
+    }
 }

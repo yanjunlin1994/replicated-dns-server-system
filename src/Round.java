@@ -13,14 +13,15 @@ public class Round {
     private Accept acceptProposal;
     private int acceptCount;
     private HashMap<Integer, Acknlg> AcknlgMap;
-    
-    
+    private boolean rejAck;
+    private HashMap<Integer, String> rejAcknlgMap;
    
     public Round(int id) {
         this.nodeID = id;
         this.promiseCount = 0;
         this.promiseMap = new HashMap<Integer, Promise>();
         this.AcknlgMap = new HashMap<Integer, Acknlg>();
+        this.rejAck = false;
     }
 
 
@@ -125,5 +126,16 @@ public class Round {
         
     }
     
-
+    public void setRejAck() {
+    	this.rejAck = true;
+    }
+    public boolean getRejAck() {
+    	return this.rejAck;
+    }
+    public HashMap<Integer, String> getRejAcknlgMap() {
+    	return this.rejAcknlgMap;
+    }
+    public void addRejAcknlg(int proposalId, String val) {
+    	rejAcknlgMap.put(proposalId, val);
+    }
 }
