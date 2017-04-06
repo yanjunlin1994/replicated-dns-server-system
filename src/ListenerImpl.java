@@ -8,7 +8,8 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     private Configuration myConfig;
     private Node me;
     private Leader currentLeader;
-    private AcceptorContent myAcceptorContent;
+    private AcceptorContent myAcceptorContent;//TODO: should be stored in disk for crash recovery
+                                               //together with round number
     /**
      * Constructor
      * @param config

@@ -44,6 +44,7 @@ public class LeaderRoutine implements Runnable {
     }
     public void prepare(Proposal p) {
         System.out.println("[LeaderRoutine] prepare");
+        //TODO:should update the accept content in leader itself
         for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
             try {
                 Promise aPromise = lisnode.LeaderPrepareProposal(p);
@@ -89,6 +90,7 @@ public class LeaderRoutine implements Runnable {
         if (this.currentRound.getAcceptCount() >= this.majority) {
             System.out.println("[LeaderRoutine] Majority ACK!");
             //TODO:check if any reject, if yes, go back and grab a new proposal number
+                   //randomize the delay before starting to avoid livelock
             //TODO: 新建一个round instance 修改指针
             //TODO: export accept to a file (txt)
         }
