@@ -41,7 +41,7 @@ public class MessagePasser {
          * Start RPC listener
          */
         try {
-            this.listener = new ListenerImpl(this.myConfig, this.me, 
+            this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader,
                             this.AcceptorListenerCommQueue, this.LeaderListenerCommQueue);
             LocateRegistry.createRegistry(Integer.valueOf(this.me.getPort()));
             Naming.rebind("//localhost:" + this.me.getPort() + "/Listener" + me.getNodeID(), listener);

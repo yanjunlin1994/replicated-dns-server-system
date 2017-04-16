@@ -102,7 +102,7 @@ public class LeaderRoutine implements Runnable {
     public void SetNewRoundParam(Proposal np) {
         this.currentRound = new Round(myID, (np.getID() / 10));
         this.currentRound.setCurrentProposal(np);    
-        System.out.println("[LeaderRoutine] [SetNewRound] Proposal is : " + np);
+        System.out.println("[LeaderRoutine] [SetNewRound] RoundID: "+this.currentRound.getRoundID() + "Proposal is : " + np);
     }
     //------------------- prepare -----------------------
     public int prepare(Proposal p) {
@@ -223,8 +223,9 @@ public class LeaderRoutine implements Runnable {
         return newProposalID;
     }
     //------------------- Commit -------------------------
-    public void commit() {
+    public void commit() {  
         Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
+        System.out.println("[LeaderRoutine] [commit] + " + cm);
         this.currentRound.setCommit(cm);
         this.CommitWriteToLog(cm);
     }

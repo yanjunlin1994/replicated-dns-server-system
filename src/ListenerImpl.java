@@ -22,13 +22,14 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      * @param m
      * @throws RemoteException
      */
-    protected ListenerImpl(Configuration config, Node m, BlockingQueue<InterThreadMessage> ai,
+    protected ListenerImpl(Configuration config, Node m, Leader cl, BlockingQueue<InterThreadMessage> ai,
                              BlockingQueue<InterThreadMessage> li) throws RemoteException {
         super(0);
         this.myConfig = config;
         this.me = m;
         this.AcceptorListenerCommQueue = ai;
         this.LeaderListenerCommQueue = li;
+        this.currentLeader = cl;
         this.myAcceptorContent = new AcceptorContent(this.me.getNodeID());
     }
     /**
@@ -57,8 +58,6 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      * Receive client request
      *
      */
-     //TODO:accpetor should forward request to leader
-     //RPC leader add to queue
     @Override
     public synchronized String clientRequest(String st) throws RemoteException {
         String response;
@@ -75,7 +74,6 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
             } else {
             	/* If client sends request to the acceptor, acceptor forward the request to leader. */
             	myConfig.getListenerIntfMap().get(currentLeader.getID()).clientRequest(st);
-//              response = "[ I am not leader, I can't handle this request, forward it to leader " + this.currentLeader.getID() +"]";
             	response = "[ I am not leader, I will forward your request to the leader " + this.currentLeader.getID() + "]";
             }
         }
