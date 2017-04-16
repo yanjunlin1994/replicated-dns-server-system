@@ -53,6 +53,16 @@ public class AcceptorContent {
     public void setLastestAction(String lastestAction) {
         this.lastestAction = lastestAction;
     }
+    /**
+     * clear the content of acceptorContent
+     */
+    public void cleanContent() {
+        this.roundNum = -1;
+        this.minProposal = -1;
+        this.AcceptedProposal = -1;
+        this.AcceptedValue = null;
+        this.lastestAction = null;     
+    }
     //TODO: export acceptor content to log file
     public void export() {
         

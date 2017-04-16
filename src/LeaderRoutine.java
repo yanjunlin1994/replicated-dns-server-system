@@ -227,7 +227,21 @@ public class LeaderRoutine implements Runnable {
         Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
         System.out.println("[LeaderRoutine] [commit] + " + cm);
         this.currentRound.setCommit(cm);
+        this.BroadCastCommit(cm);
         this.CommitWriteToLog(cm);
+    }
+    /**
+     * send commits to all acceptors
+     */
+    public void BroadCastCommit(Commit bc) {
+        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
+            try {
+                int r = lisnode.LeaderCommitProposal(bc);
+                System.out.println("[LeaderRoutine] [BroadCastCommit] commit Recived: " + bc);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }  
     }
     /**
      * Write to disk

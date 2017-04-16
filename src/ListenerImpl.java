@@ -121,4 +121,21 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
             return ack;
         }
     }
+    /**
+     * Receive a commit from leader
+     */
+    @Override
+    public int LeaderCommitProposal(Commit c) throws RemoteException {
+        System.out.println("[Recieve LeaderCommitProposal] " + c);
+        Commit nc = new Commit(c);
+        this.myAcceptorContent.cleanContent();//clear to content in my current acceptor
+        return writeToCommitLog(nc);
+        
+    }
+    public int writeToCommitLog(Commit c) {
+        //TODO: write to commitLog file
+        return 0;
+    }
+    
+    
 }

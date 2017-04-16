@@ -8,6 +8,9 @@ public class Commit implements Serializable {
     public Commit (String c) {
         this.value = c;
     }
+    public Commit (Commit c) {
+        this.value = c.getValue();
+    }
     public String getValue() {
         return this.value;
     }
