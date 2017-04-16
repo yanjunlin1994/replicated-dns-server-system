@@ -46,9 +46,9 @@ public class HeartBeatMessage extends Message implements Serializable {
     }
     @Override
     public String toString() { 
-        return "[HeartBeatMessage from " + this.myID + "] " + 
-               "[seq: " + this.seqNum + "]" +
-                this.kind + " " + this.content;
+        return "[HeartBeatMessage from " + this.myID + 
+               " seq: " + this.seqNum + " kind: " +
+                this.kind + " content: " + this.content + " ]";
     }
     
 }

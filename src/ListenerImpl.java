@@ -3,31 +3,33 @@ import java.rmi.RemoteException;
 import java.rmi.registry.*;
 import java.rmi.Naming;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.HashMap;
 public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     private Configuration myConfig;
     private Node me;
+    private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
+    private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
+    
     private Leader currentLeader;
-<<<<<<< HEAD
     private AcceptorContent myAcceptorContent;//TODO: should be stored in disk for crash recovery
                                                //together with round number
-=======
-    private AcceptorContent myAcceptorContent;
-    private AcceptorRoutine myAcceptorRoutine;
->>>>>>> 61458281d74989fe99de6b018f0f1adff10e42b2
+    
     /**
      * Constructor
      * @param config
      * @param m
      * @throws RemoteException
      */
-    protected ListenerImpl(Configuration config, Node m, Leader l, AcceptorContent acp, AcceptorRoutine acpRoutine) throws RemoteException {
+    protected ListenerImpl(Configuration config, Node m, BlockingQueue<InterThreadMessage> ai,
+                             BlockingQueue<InterThreadMessage> li) throws RemoteException {
         super(0);
         this.myConfig = config;
         this.me = m;
-        this.currentLeader = l;
-        this.myAcceptorContent = acp;
-        this.myAcceptorRoutine = acpRoutine;
+        this.AcceptorListenerCommQueue = ai;
+        this.LeaderListenerCommQueue = li;
+        this.myAcceptorContent = new AcceptorContent(this.me.getNodeID());
     }
     /**
      * Receive Hello message
@@ -43,13 +45,12 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      * Receive Leader HeartBeat
      */
     @Override
-    public void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
+    public synchronized void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
         HeartBeatMessage mesg = h;
-        System.out.println("[Recieve LeaderHeartBeat] " + mesg);
-        System.out.println("[Current HeartBeat Count] " + this.myAcceptorRoutine.getHeartbeatCount());
-        this.myAcceptorRoutine.addHeartbeat();
-        //TODO:
-        //if an acceptor doesn't receive heartbeat message from leader for xx seconds. Elect a new leader
+        System.out.println("[ListenerImpl][LeaderHeartBeat] [Recieve LeaderHeartBeat] " + mesg);
+        InterThreadMessage lhb= new InterThreadMessage(mesg.getMyID(), this.me.getNodeID(), 
+                                                "HeartBeatMessage", mesg.toString(), mesg.getSeqNum());
+        this.AcceptorListenerCommQueue.add(lhb);
         return;
     }
     /**
@@ -65,10 +66,8 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         System.out.println("[check current leader: " + this.currentLeader.getID() + "]");
         if (me.getNodeID() == this.currentLeader.getID()) {
         	/* Once receiving a new request, leader adds the request into the processQueue. */
-            response = "[ I am leader, I can handle this request]";
-            int newProposalNum = this.myConfig.getNodeMap().get(me.getNodeID()).pollProposalNum();
-            System.out.println("[Recieve clientRequest] handle this request newProposalNum " + newProposalNum);
-            Proposal np = new Proposal(newProposalNum, st);
+            response = "[ I am leader, I can handle this request]"; 
+            Proposal np = new Proposal(-1, st);
             this.currentLeader.addNewProposal(np);
         } else {
             if (this.currentLeader.getID() == -1) {

@@ -2,55 +2,39 @@ import java.io.Serializable;
 
 public class Acknlg implements Serializable {
     private int src;
-    private int ID; //min proposal id
-    private String value;
-    private boolean ifrealAcknlg;//could send the nack back as a type of promise
-    public Acknlg(int s, int i) {
+    private int minProposal; //min proposal id
+    private boolean ifrealAcknlg; //could send the nack back as a type of promise
+    public Acknlg(int s, int mp) {
         this.src = s;
-        this.ID = i;
+        this.minProposal = mp;
         this.ifrealAcknlg = false;
     }
     public Acknlg(Acknlg a) {
         this.src = a.getSrc();
-        this.ID = a.getID();
-        this.value = a.getValue();
-        this.ifrealAcknlg = a.getIsIfrealAcknlg();
+        this.minProposal = a.getMinProposal();
+        this.ifrealAcknlg = a.getisIfrealAcknlg();
     }
-    
     public int getSrc() {
         return src;
     }
-
     public void setSrc(int src) {
         this.src = src;
     }
-
-    public int getID() {
-        return this.ID;
+    public int getMinProposal() {
+        return minProposal;
     }
-
-    public void setID(int iD) {
-        this.ID = iD;
+    public void setMinProposal(int minProposal) {
+        this.minProposal = minProposal;
     }
-
-    public String getValue() {
-        return this.value;
+    public boolean getisIfrealAcknlg() {
+        return ifrealAcknlg;
     }
-    public void setValue(String v) {
-        this.value = v;
+    public void setIfrealAcknlg(boolean ifrealAcknlg) {
+        this.ifrealAcknlg = ifrealAcknlg;
     }
-    
-    public boolean getIsIfrealAcknlg() {
-        return this.ifrealAcknlg;
-    }
-
-    public void setIfrealAcknlg(boolean i) {
-        this.ifrealAcknlg = i;
-    }
-
     @Override
     public String toString() { 
-        return "[" + this.ifrealAcknlg + " ack ID." + this.ID + " " + this.value + "]";
+        return "[ACK from " + this.src + "  " + this.ifrealAcknlg + " minProposal: " + this.minProposal + "]";
     }
 
 }

@@ -40,16 +40,18 @@ public class Configuration {
                                     (int)node.get("port"));
             this.nodeMap.put((int)node.get("id"),newNode); //put node in nodemap   
         }
-        dnsFile = (String) data.get("dnsFile");
-        System.out.println("[Configuration] dns target path: " + dnsFile);
         this.updateProposalNumSet();
+        //------------- log file -----------
+        dnsFile = (String) data.get("dnsFile");
+//        System.out.println("[Configuration] dns target path: " + dnsFile);
+       
     } 
     /**
      * Update the proposal number set of each node
      */
     public void updateProposalNumSet() {
         int base  = 0;
-        int proposalNum = 10;
+        int proposalNum = 20;
         for (Node nd : this.nodeMap.values()) {
            for (int i = 0; i < proposalNum; i++) {
                nd.addProposalNum(base + nd.getNodeID());
@@ -73,15 +75,12 @@ public class Configuration {
                 HeartBeatMessage hello = new HeartBeatMessage(myID, "hello", "hello :D");
                 HeartBeatMessage helloBack = NodeListener.HelloChat(hello);
                 this.ListenerIntfMap.put(nd.getNodeID(),NodeListener);//put in ListenerInterface map
-                System.out.println("[Recieve HelloBACK] "+ helloBack);
+                System.out.println("[updateListenerIntfMap] [Recieve HelloBACK] "+ helloBack);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println("[updateListenerIntfMap] connection fails with Node." + nd.getNodeID());
+                continue;
             }
         }
-        //TODO: handle unreachable node in the beginning 
-//        if (this.ListenerIntfMap.size() != this.nodeMap.size() - 1) {
-//            
-//        }
     }
     /**
      * Get next leader ID
@@ -91,6 +90,11 @@ public class Configuration {
     public int getNextLeader(int currentLeader) {
         int nextID = (currentLeader + 1) % nodeMap.size();
         return this.nodeMap.get(nextID).getNodeID();   
+    }
+    public void removeNode(int nodeID) {
+        Node rmN = this.nodeMap.get(nodeID);
+        rmN.setActive(false);
+        this.ListenerIntfMap.remove(nodeID);   
     }
     public HashMap<Integer, ListenerIntf> getListenerIntfMap() {
         return this.ListenerIntfMap;

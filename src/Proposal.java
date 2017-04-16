@@ -7,6 +7,14 @@ public class Proposal implements Serializable {
         this.ID = i;
         this.value = c;
     }
+    /**
+     * Clone
+     * @param p
+     */
+    public Proposal(Proposal p) {
+        this.ID = p.getID();
+        this.value = p.getValue();
+    }
     
     public int getID() {
         return this.ID;
