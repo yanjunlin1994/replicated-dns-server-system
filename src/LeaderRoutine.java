@@ -68,14 +68,17 @@ public class LeaderRoutine implements Runnable {
     public int NewRoundHandler(Proposal p) throws Exception {
         System.out.println("[LeaderRoutine] [NewRoundHandler]");
         Proposal np = new Proposal(p);//copy the proposal argument
-        this.interRoundProposal = null; //clear the interRound proposal
         int prepareSucceed = -1; //-1: fail; 0:succeed
         
         /** keep trying new proposal number until prepare succeed */
         while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {
-            int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
-            np.setID(newProposalNum);
+            if (this.interRoundProposal == null) {
+                int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
+                np.setID(newProposalNum);      
+            }
+            
             this.SetNewRoundParam(np);
+            this.interRoundProposal = null; //clear the interRound proposal
             if (this.prepare(np) != -1) {
                 prepareSucceed = 0;
                 break;
@@ -227,7 +230,7 @@ public class LeaderRoutine implements Runnable {
         Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
         System.out.println("[LeaderRoutine] [commit] + " + cm);
         this.currentRound.setCommit(cm);
-        this.BroadCastCommit(cm);
+        this.BroadCastCommit(cm);//x
         this.CommitWriteToLog(cm);
     }
     /**
