@@ -10,16 +10,20 @@ public class Node {
     private boolean isActive;
     /* proposal number set (like 1, 11, 21, ...) */
     private Queue<Integer> proposalNumSet;
-   
+    /* Each node has its dns file, which stores the dns content and transaction information */
+    private DNSFile dnsfile;
     public Node(int id, String i, int prt) {
         this.nodeID = id;
         this.ip = i;
         this.port = prt;
         this.isActive = true;
         this.proposalNumSet = new LinkedBlockingQueue<Integer>();
+        this.dnsfile = new DNSFile(String.valueOf(nodeID));
     }
-
-    public int getNodeID() {
+    public DNSFile getDnsfile() {
+		return dnsfile;
+	}
+	public int getNodeID() {
         return nodeID;
     }
 

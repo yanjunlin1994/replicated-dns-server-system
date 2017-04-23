@@ -20,7 +20,7 @@ public class AcceptorRoutine implements Runnable {
         this.myConfig = myConfig;
         this.latestHeartbeat = 0;
         this.leaderFailCount = 0;
-        this.AcceptorListenerCommQueue = al;    
+        this.AcceptorListenerCommQueue = al;
         this.AcceptorMpCommQueue = am;
     }
     @SuppressWarnings("resource")
@@ -40,7 +40,7 @@ public class AcceptorRoutine implements Runnable {
                     return;//kill thread
                 }  
             }
-            /* Get new heartbeat message from queue */
+            /* Get new heartbeat message from queue and update the latest heartbeat time */
             if (this.AcceptorListenerCommQueue.size() > 0) {
                 InterThreadMessage newMessage = this.AcceptorListenerCommQueue.poll();
                 this.processInterThreadMessage(newMessage);

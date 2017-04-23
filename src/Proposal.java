@@ -12,7 +12,9 @@ public class Proposal implements Serializable {
     public Proposal(int logId, int proposalId, DNSEntry dnsentry) {
     	this.logId = logId;
     	this.proposalId = proposalId;
-    	this.dnsentry = dnsentry;
+    	this.dnsentry = new DNSEntry();
+    	this.dnsentry.setDns(dnsentry.getDns());
+    	this.dnsentry.setIp(dnsentry.getIp());
     }
     /**
      * Clone

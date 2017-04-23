@@ -23,8 +23,8 @@ public class Round {
     /** record the rej's minproposal ID */
     private HashSet<Integer> rejAcknlgSet; 
     private Commit commit;
-   
-    public Round(int nid, int rid) {
+    private int logId;
+    public Round(int nid, int rid, int logId) {
         this.nodeID = nid;
         this.RoundID = rid;
         this.promiseCount = 0;
@@ -33,6 +33,10 @@ public class Round {
         this.AcknlgMap = new HashMap<Integer, Acknlg>();
         this.rejAck = false;
         this.rejAcknlgSet = new HashSet<Integer>();
+        this.logId = logId;
+    }
+    public int getLogId() {
+    	return logId;
     }
     public int getNodeID() {
         return nodeID;
@@ -134,17 +138,18 @@ public class Round {
      * Find max value corresponded to the promise with largest ID.
      * @return max value
      */
-    public String findPromiseMaxIDValue() {
+    public DNSEntry findPromiseMaxIDValue() {
         int maxsrc = 0;
         for (Promise p : this.promiseMap.values()) {
+        	/* TODO why use || here? */
             if ((this.promiseMap.get(maxsrc) == null) || 
-                    (p.getID() > (this.promiseMap.get(maxsrc)).getID())) {
+                    (p.getAcceptedId() > (this.promiseMap.get(maxsrc)).getAcceptedId())) {
                 maxsrc = p.getSrc();
             }
         }
         System.out.println("[Round Class] [findPromiseMaxIDValue] value is: " +
-                                  this.promiseMap.get(maxsrc).getValue());
-        return this.promiseMap.get(maxsrc).getValue();     
+                                  this.promiseMap.get(maxsrc).getAccptedValue());
+        return this.promiseMap.get(maxsrc).getAccptedValue();     
     }
     /**
      * If any rejects, find the largest minproposal ID in those rejects.

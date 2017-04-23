@@ -17,7 +17,8 @@ public class LeaderRoutine implements Runnable {
     private Proposal interRoundProposal; //temp proposal between reject and start a new round.
     private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
     private BlockingQueue<InterThreadMessage> LeaderMpCommQueue;
- 
+    private int logId;
+    private Node me;
     public LeaderRoutine(int id, Configuration myConfig, Leader currentL, BlockingQueue<InterThreadMessage> i, BlockingQueue<InterThreadMessage> m) {
         this.myID = id;
         this.myConfig = myConfig;   
@@ -27,6 +28,7 @@ public class LeaderRoutine implements Runnable {
         this.interRoundProposal = null;
         this.LeaderListenerCommQueue = i;
         this.LeaderMpCommQueue = m;
+        this.me = myConfig.getNodeMap().get(myID);
     }
     @SuppressWarnings("resource")
     @Override
@@ -54,12 +56,24 @@ public class LeaderRoutine implements Runnable {
      */
     public synchronized void ReceiveNewProposal() throws Exception {
         System.out.println("[LeaderRoutine] have a new proposal!");
+        /* TODO why poll the proposal out? */
         Proposal np = this.currentLeader.pollProposal(); 
+        /* find an appropriate log id for the new proposal */
+        logId = me.getDnsfile().getMinUnchosenLogId();
+        np.setLogId(logId);
+        
         int result = -1;
-        while (result != 0) {//while having rejects.
+        /* Before sending the proposal, initialize the transaction information in it */
+        while (result != 0) {
+        	/* while having rejects.
+        	 * If it is this proposal is from last round, it should update its proposal id and keep the same log id.
+        	 * If it is a new proposal from client, start with smallest proposal id and choose the least unchosen id in the log.
+        	 */
             if (this.interRoundProposal != null) {
                 np = this.interRoundProposal;
             }
+            DNSFile dnsfile = me.getDnsfile();
+            dnsfile.writeEntry(new Entry(np.getLogId(), np.getProposalId(), np.getProposalId(), np.getDnsentry()));
             result = this.NewRoundHandler(np);
         }
     }
@@ -73,12 +87,12 @@ public class LeaderRoutine implements Runnable {
         Proposal np = new Proposal(p);//copy the proposal argument
         this.interRoundProposal = null; //clear the interRound proposal
         int prepareSucceed = -1; //-1: fail; 0:succeed
-        
-        /** keep trying new proposal number until prepare succeed */
+        /* keep trying new proposal number until prepare succeed */
         while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {
             int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
-            np.setID(newProposalNum);
+            np.setProposalId(newProposalNum);
             this.SetNewRoundParam(np);
+            /* If the prepare doesn't succeed, start another prepare proposal again */
             if (this.prepare(np) != -1) {
                 prepareSucceed = 0;
                 break;
@@ -93,7 +107,12 @@ public class LeaderRoutine implements Runnable {
             }
             return -1;
         } else {
-            this.commit();
+//            this.commit();
+        	/* the proposed value is chosen */
+        	DNSFile dnsfile = me.getDnsfile();
+        	Entry entry = dnsfile.readEntry(logId);
+        	entry.setChosen();
+        	dnsfile.writeEntry(entry);
             return 0;
         }
     }
@@ -103,21 +122,28 @@ public class LeaderRoutine implements Runnable {
      * @param np
      */
     public void SetNewRoundParam(Proposal np) {
-        this.currentRound = new Round(myID, (np.getID() / 10));
+        this.currentRound = new Round(logId, myID, (np.getProposalId() / 10));
         this.currentRound.setCurrentProposal(np);    
         System.out.println("[LeaderRoutine] [SetNewRound] RoundID: "+this.currentRound.getRoundID() + "Proposal is : " + np);
     }
     //------------------- prepare -----------------------
+    /**
+     * Leader sends prepare proposal to slaves.
+     * @param p
+     * @return
+     */
     public int prepare(Proposal p) {
         System.out.println("[LeaderRoutine] prepare");
         for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
             try {
+            	/* Leader receive the promise from slaves */
                 Promise aPromise = lisnode.LeaderPrepareProposal(p);
                 this.currentRound.addPromiseMap(aPromise);// add to promise map
                 System.out.println("[LeaderRoutine] [prepare] prepare Recived: " + aPromise);
-                if (aPromise.getIsIfrealPromise()) {
+                /* TODO: Why do we need ifrealPromise? */
+//                if (aPromise.getIsIfrealPromise()) {
                     this.currentRound.increPromiseCount();
-                }
+//                }
             } catch (Exception e) {
                 System.err.println("[Leader Routine] [Prepare] Someone loses connection");
                 continue;//continue to other listeners
@@ -148,14 +174,14 @@ public class LeaderRoutine implements Runnable {
      * @return new Accept object.
      */
     public Accept createNewAccept(){   
-        String modifiedValue = this.currentRound.findPromiseMaxIDValue();
+        DNSEntry modifiedValue = this.currentRound.findPromiseMaxIDValue();
         if (modifiedValue == null) {
             //use current proposal value without modifying it
             System.out.println("[LeaderRoutine] [createNewAccept] no existing value before, use my own value");                
-            modifiedValue = this.currentRound.getCurrentProposal().getValue();
+            modifiedValue = this.currentRound.getCurrentProposal().getDnsentry();
         }
         System.out.println("[LeaderRoutine] [createNewAccept] accept value is: " + modifiedValue);
-        Accept accp = new Accept(this.currentRound.getCurrentProposal().getID(), modifiedValue);
+        Accept accp = new Accept(this.currentRound.getLogId(), this.currentRound.getCurrentProposal().getProposalId(), modifiedValue);
         this.currentRound.setAcceptProposal(accp); //add to current round
         return accp;
     }
@@ -198,7 +224,8 @@ public class LeaderRoutine implements Runnable {
                 System.err.println("[LeaderRoutine] [RejectHandler] proposalNumSet exhausted");
                 return -1;
             }
-            Proposal np = new Proposal(newProposalID, this.currentRound.getAcceptProposal().getValue());
+            /* TODO when is getAcceptProposal() update? */
+            Proposal np = new Proposal(me.getDnsfile().getMinUnchosenLogId(), newProposalID, this.currentRound.getAcceptProposal().getValue());
             this.interRoundProposal = np;
             return 0;
         } catch (Exception e) {
@@ -225,40 +252,40 @@ public class LeaderRoutine implements Runnable {
         }
         return newProposalID;
     }
-    //------------------- Commit -------------------------
-    public void commit() {  
-        Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
-        System.out.println("[LeaderRoutine] [commit] + " + cm);
-        this.currentRound.setCommit(cm);
-        this.BroadCastCommit(cm);
-        this.CommitWriteToLog(cm);
-    }
-    /**
-     * send commits to all acceptors
-     */
-    public void BroadCastCommit(Commit bc) {
-        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
-            try {
-                int r = lisnode.LeaderCommitProposal(bc);
-                System.out.println("[LeaderRoutine] [BroadCastCommit] commit Recived: " + bc);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }  
-    }
-    /**
-     * Write to disk
-     * @param cm
-     */
-    public void CommitWriteToLog(Commit cm) {
-        FileWriter fw;
-        try {
-            fw = new FileWriter(myConfig.getDNSFile(),true); //the true will append the new data
-            fw.write(cm.getValue() + System.getProperty( "line.separator" ));//appends the string to the file
-            fw.close();
-        } catch(IOException ioe) {
-            System.err.println("IOException: " + ioe.getMessage());
-        }
-    }
+//    //------------------- Commit -------------------------
+//    public void commit() {  
+//        Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
+//        System.out.println("[LeaderRoutine] [commit] + " + cm);
+//        this.currentRound.setCommit(cm);
+//        this.BroadCastCommit(cm);
+//        this.CommitWriteToLog(cm);
+//    }
+//    /**
+//     * send commits to all acceptors
+//     */
+//    public void BroadCastCommit(Commit bc) {
+//        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
+//            try {
+//                int r = lisnode.LeaderCommitProposal(bc);
+//                System.out.println("[LeaderRoutine] [BroadCastCommit] commit Recived: " + bc);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }  
+//    }
+//    /**
+//     * Write to disk
+//     * @param cm
+//     */
+//    public void CommitWriteToLog(Commit cm) {
+//        FileWriter fw;
+//        try {
+//            fw = new FileWriter(myConfig.getDNSFile(),true); //the true will append the new data
+//            fw.write(cm.getValue() + System.getProperty( "line.separator" ));//appends the string to the file
+//            fw.close();
+//        } catch(IOException ioe) {
+//            System.err.println("IOException: " + ioe.getMessage());
+//        }
+//    }
 
 }

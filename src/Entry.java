@@ -21,6 +21,12 @@ public class Entry implements Serializable {
 		acceptedProposalId = -1;
 		dnsEntry = new DNSEntry();
 	}
+	public Entry(int logId, int minProposalId, int acceptedId, DNSEntry dnsentry) {
+		this.logId = logId;
+		this.minProposalId = minProposalId;
+		this.acceptedProposalId = acceptedId;
+		this.dnsEntry = dnsentry;
+	}
 	/**
 	 * Return the Entry object's byte representation.
 	 */

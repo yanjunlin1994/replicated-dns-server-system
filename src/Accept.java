@@ -11,6 +11,11 @@ public class Accept implements Serializable {
     private int proposalId;
     /* The DNS Entry in leader's accept proposal */
     private DNSEntry dnsentry;
+    public Accept(int logId, int proposalId, DNSEntry dnsentry) {
+    	this.logId = logId;
+    	this.proposalId = proposalId;
+    	this.dnsentry = dnsentry;
+    }
     public int getLogId() {
     	return logId;
     }

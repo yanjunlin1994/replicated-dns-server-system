@@ -14,6 +14,18 @@ public class DNSEntry implements Serializable {
 		ip = new byte[IP_MAXLENGTH];
 		System.arraycopy(nullarray, 0, ip, 0, nullarray.length);
 	}
+	public byte[] getDns() {
+		return dns;
+	}
+	public void setDns(byte[] dns) {
+		System.arraycopy(this.dns, 0, dns, 0, DNS_MAXLENGTH);
+	}
+	public byte[] getIp() {
+		return ip;
+	}
+	public void setIp(byte[] ip) {
+		System.arraycopy(this.ip, 0, ip, 0, IP_MAXLENGTH);
+	}
 	/**
 	 * Set dns field.
 	 */
@@ -51,11 +63,13 @@ public class DNSEntry implements Serializable {
 	 * Create a new DNSEntry by copy the given char array.
 	 */
 	public DNSEntry(String dns, String ip) {
+		this.dns = new byte[DNS_MAXLENGTH];
+		this.ip = new byte[IP_MAXLENGTH];
 		if (dns.length() > DNS_MAXLENGTH || ip.length() > IP_MAXLENGTH) {
 			System.err.println("[DNSEntry(dns, ip)] string length exceeds limit.");
 		}
-		System.arraycopy(dns.toCharArray(), 0, this.dns, 0, dns.length());
-		System.arraycopy(ip.toCharArray(), 0, this.ip, 0, ip.length());
+		System.arraycopy(dns.getBytes(), 0, this.dns, 0, dns.length());
+		System.arraycopy(ip.getBytes(), 0, this.ip, 0, ip.length());
 	}
 	/**
 	 * Create DNSEntry from byte array read from a line.
@@ -67,5 +81,12 @@ public class DNSEntry implements Serializable {
 		ip = new byte[IP_MAXLENGTH];
 		System.arraycopy(byteArray, 0, this.dns, 0, DNS_MAXLENGTH);
 		System.arraycopy(byteArray, DNS_MAXLENGTH, this.ip, 0, IP_MAXLENGTH);
+	}
+	public boolean hasAccepted() {
+		if (new String(dns).equals("null") || new String(ip).equals("null")) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 }

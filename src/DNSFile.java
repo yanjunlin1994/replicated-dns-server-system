@@ -6,16 +6,27 @@ public class DNSFile {
 	private EntryWriter er;
 	private int minUnchosenLogId;
 	
-	public DNSFile(String node) throws IOException {
+	public DNSFile(String node) {
 		dnsfile = node+LOGFILE;
-		er = new EntryWriter(dnsfile);
+		try {
+			er = new EntryWriter(dnsfile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		minUnchosenLogId = 0;
 	}
 	/**
-	 * Write/Update Entry at the 'logId' line
+	 * write an empty Entry of id 'logId'
 	 */
 	public void writeEntry(int logId) {
 		Entry entry = new Entry(logId);
+		er.write(entry);
+	}
+	/**
+	 * Write the given entry of id 'logId'
+	 * @param entry
+	 */
+	public void writeEntry(Entry entry) {
 		er.write(entry);
 	}
 	public Entry readEntry(int logId) {
