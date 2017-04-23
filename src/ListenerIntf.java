@@ -7,9 +7,5 @@ public interface ListenerIntf extends Remote {
     public String clientRequest(String st) throws RemoteException;
     public Promise LeaderPrepareProposal(Proposal p) throws RemoteException;
     public Acknlg LeaderAcceptProposal(Accept a) throws RemoteException;
-    public int LeaderCommitProposal(Commit c) throws RemoteException;
-    
-    
-    
-    
+    public int LeaderCommitProposal(Commit c) throws RemoteException;   
 }

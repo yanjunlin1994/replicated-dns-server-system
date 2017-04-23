@@ -1,6 +1,7 @@
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
 import java.rmi.registry.*;
+import java.io.IOException;
 import java.rmi.Naming;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -15,15 +16,17 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     private Leader currentLeader;
     private AcceptorContent myAcceptorContent;//TODO: should be stored in disk for crash recovery
                                                //together with round number
+    /* dns file records the dns entry and transaction information */
+    private DNSFile dnsf;
     
     /**
      * Constructor
      * @param config
      * @param m
-     * @throws RemoteException
+     * @throws IOException 
      */
     protected ListenerImpl(Configuration config, Node m, Leader cl, BlockingQueue<InterThreadMessage> ai,
-                             BlockingQueue<InterThreadMessage> li) throws RemoteException {
+                             BlockingQueue<InterThreadMessage> li) throws IOException {
         super(0);
         this.myConfig = config;
         this.me = m;
@@ -31,9 +34,11 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         this.LeaderListenerCommQueue = li;
         this.currentLeader = cl;
         this.myAcceptorContent = new AcceptorContent(this.me.getNodeID());
+        this.dnsf = new DNSFile(String.valueOf(me.getNodeID()));
     }
     /**
-     * Receive Hello message
+     * When slave receives a hello message from master, it will print out the hello message, as well
+     * as sends back a acknowledgment.
      */
     @Override
     public HeartBeatMessage HelloChat(HeartBeatMessage h) throws RemoteException {
@@ -43,7 +48,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         return helloBack;
     }
     /**
-     * Receive Leader HeartBeat
+     * When slaves receive a heartbeat message from master, it will add the message into the AcceptorLisenerCommQueue.
      */
     @Override
     public synchronized void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
@@ -55,18 +60,21 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         return;
     }
     /**
-     * Receive client request
-     *
+     * When machine receives a user request:
+     * 1. If it is the master
+     * 2. If it is not the master
+     * 3. If the cluster does not have a master yet
      */
     @Override
-    public synchronized String clientRequest(String st) throws RemoteException {
+    public synchronized String clientRequest(DNSEntry dnsentry) throws RemoteException {
         String response;
-        System.out.println("[Recieve clientRequest] " + st);
+        System.out.println("[Recieve clientRequest] " + dnsentry);
         System.out.println("[check current leader: " + this.currentLeader.getID() + "]");
         if (me.getNodeID() == this.currentLeader.getID()) {
         	/* Once receiving a new request, leader adds the request into the processQueue. */
             response = "[ I am leader, I can handle this request]"; 
-            Proposal np = new Proposal(-1, st);
+            /* generate a proposal and add it into leader's request queue */
+            Proposal np = new Proposal(-1, -1, dnsentry);
             this.currentLeader.addNewProposal(np);
         } else {
             if (this.currentLeader.getID() == -1) {
@@ -80,7 +88,9 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         return response;
     }
     /**
-     * Receive proposal from leader
+     * Receive a prepare request from leader.
+     * If the proposer id is larger than the acceptor's minProposal, set acceptor's minProposal to this proposal.
+     * Return the acceptor's <acceptedProposal, acceptedValue>, return <null, null> if it hasn't accepted any.
      */
     @Override
     public Promise LeaderPrepareProposal(Proposal p) throws RemoteException {
@@ -98,10 +108,10 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
             System.out.println(this.myAcceptorContent);
             return pro;
         }
-        
     }
     /**
-     * Receive a accept from leader
+     * Acceptor receive an accept request from leader.
+     * If the acceptor's minproposal is smaller than the leader's proposal id, update its minProposalId.
      */
     @Override
     public Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
@@ -136,6 +146,4 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         //TODO: write to commitLog file
         return 0;
     }
-    
-    
 }

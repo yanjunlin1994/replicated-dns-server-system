@@ -30,18 +30,22 @@ public class AcceptorRoutine implements Runnable {
         while (true) {
             if (this.checkHeartBeatExpire() != 0) {
                 this.increLeaderFailCount();
+                /* If there are multiple failures */
                 System.out.println("[Acceptor Routine] Leader fails for " + this.leaderFailCount + " times"); 
                 if (this.leaderFailCount > this.largestLeaderFailureCount) {
                     System.out.println("[Acceptor Routine] Leader failure maximum achieved, go to LeaderFailure handler"); 
+                    /* If there are too many timeouts between communication between leader and slave,
+                     *  the slave will try to elect a new leader */
                     this.handleLeaderFailure();
                     return;//kill thread
                 }  
             }
+            /* Get new heartbeat message from queue */
             if (this.AcceptorListenerCommQueue.size() > 0) {
                 InterThreadMessage newMessage = this.AcceptorListenerCommQueue.poll();
-               this.processInterThreadMessage(newMessage);
+                this.processInterThreadMessage(newMessage);
             }
-            /** sleep for 2 seconds for efficiency */
+            /* sleep for 2 seconds for efficiency */
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
@@ -49,12 +53,20 @@ public class AcceptorRoutine implements Runnable {
             }
         }
     }
+    /**
+     * Process the newly coming message in message queue.
+     * @param newM If it is a heartbeat message, update the latest hearbeat time.
+     */
     public void processInterThreadMessage(InterThreadMessage newM) {
         if (newM.getKind().equals("HeartBeatMessage")) {
             System.out.println("[Acceptor Routine] [processInterThreadMessage] new Leader HeartBeat message");
             this.setLatestHeartbeat(System.currentTimeMillis()); 
         }
     }
+    /**
+     * Check if there is a timeout since last heartbeat.
+     * @return
+     */
     public int checkHeartBeatExpire() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - this.latestHeartbeat > this.longestHeartBeatInterval) {
@@ -70,6 +82,7 @@ public class AcceptorRoutine implements Runnable {
         System.out.println("[Acceptor Routine] [handleLeaderFailure]"); 
         InterThreadMessage lf= new InterThreadMessage(this.myID, this.myID, 
                                    "LeaderFailure", "LeaderFailure", -1);
+        /* Add a 'leader fail' message into the AcceptorMpCommQueue, to notify the messagePasser process */
         this.AcceptorMpCommQueue.add(lf);
         return 0;
     }
@@ -87,7 +100,5 @@ public class AcceptorRoutine implements Runnable {
     }
     public void increLeaderFailCount() {
         this.leaderFailCount = this.leaderFailCount + 1;
-    }
-    
-   
+    }  
 }

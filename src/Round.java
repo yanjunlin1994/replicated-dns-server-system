@@ -34,8 +34,6 @@ public class Round {
         this.rejAck = false;
         this.rejAcknlgSet = new HashSet<Integer>();
     }
-
-
     public int getNodeID() {
         return nodeID;
     }
@@ -160,6 +158,5 @@ public class Round {
         System.out.println("[Round Class] [findRejMaxMinproposalID] minproposal ID is: " +
                 maxMinproposal);
         return maxMinproposal;
-        
     }
 }

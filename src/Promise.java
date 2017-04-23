@@ -20,7 +20,6 @@ public class Promise implements Serializable {
     public int getSrc() {
         return src;
     }
-
     public void setSrc(int src) {
         this.src = src;
     }

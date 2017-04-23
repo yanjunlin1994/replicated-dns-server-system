@@ -27,8 +27,9 @@ public class MessagePasser {
      * Constructor
      * @param configuration_filename
      * @param ID
+     * @throws IOException 
      */
-    public MessagePasser(String configuration_filename, int ID) {
+    public MessagePasser(String configuration_filename, int ID) throws IOException {
         this.myConfig = new Configuration(configuration_filename);
         this.myID = ID;
         this.me = this.myConfig.getNodeMap().get(ID);  
@@ -75,6 +76,10 @@ public class MessagePasser {
             }
         }
     }
+    /**
+     * Decide which branch the processor is going to.
+     * @return
+     */
     public int LeaderAcceptorBranch() {
         if (this.myID == this.currentLeader.getID()) {
             return this.LeaderEntrance(); 
@@ -83,11 +88,19 @@ public class MessagePasser {
             return this.AcceptorEntrance();
         }
     }
+    /**
+     * Open a new leader routine thread.
+     * @return
+     */
     public int LeaderEntrance() {
         Thread myleaderRoutine = new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader, this.LeaderListenerCommQueue, this.LeaderMpCommQueue));
         myleaderRoutine.start();
         return this.waitLeaderRoutine();
     }
+    /**
+     * Open an acceptor thread routine.
+     * @return
+     */
     public int AcceptorEntrance() {
         Thread myAcceptorRoutine = new Thread(new AcceptorRoutine(this.myID, this.myConfig, this.AcceptorListenerCommQueue, this.AcceptorMpCommQueue));
         myAcceptorRoutine.start();
@@ -123,8 +136,6 @@ public class MessagePasser {
             }
         }
     }
-    
-    
     /**
      * Elect a new leader according to id
      * @param currentld
