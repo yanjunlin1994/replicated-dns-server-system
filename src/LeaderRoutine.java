@@ -85,14 +85,23 @@ public class LeaderRoutine implements Runnable {
     public int NewRoundHandler(Proposal p) throws Exception {
         System.out.println("[LeaderRoutine] [NewRoundHandler]");
         Proposal np = new Proposal(p);//copy the proposal argument
-        this.interRoundProposal = null; //clear the interRound proposal
         int prepareSucceed = -1; //-1: fail; 0:succeed
         /* keep trying new proposal number until prepare succeed */
         while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {
+<<<<<<< HEAD
             int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
             np.setProposalId(newProposalNum);
             this.SetNewRoundParam(np);
             /* If the prepare doesn't succeed, start another prepare proposal again */
+=======
+            if (this.interRoundProposal == null) {
+                int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
+                np.setID(newProposalNum);      
+            }
+            
+            this.SetNewRoundParam(np);
+            this.interRoundProposal = null; //clear the interRound proposal
+>>>>>>> 7827640d27fbd057ad5c82e0156e1367614b2621
             if (this.prepare(np) != -1) {
                 prepareSucceed = 0;
                 break;
@@ -252,6 +261,7 @@ public class LeaderRoutine implements Runnable {
         }
         return newProposalID;
     }
+<<<<<<< HEAD
 //    //------------------- Commit -------------------------
 //    public void commit() {  
 //        Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
@@ -287,5 +297,42 @@ public class LeaderRoutine implements Runnable {
 //            System.err.println("IOException: " + ioe.getMessage());
 //        }
 //    }
+=======
+    //------------------- Commit -------------------------
+    public void commit() {  
+        Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
+        System.out.println("[LeaderRoutine] [commit] + " + cm);
+        this.currentRound.setCommit(cm);
+        this.BroadCastCommit(cm);//x
+        this.CommitWriteToLog(cm);
+    }
+    /**
+     * send commits to all acceptors
+     */
+    public void BroadCastCommit(Commit bc) {
+        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
+            try {
+                int r = lisnode.LeaderCommitProposal(bc);
+                System.out.println("[LeaderRoutine] [BroadCastCommit] commit Recived: " + bc);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }  
+    }
+    /**
+     * Write to disk
+     * @param cm
+     */
+    public void CommitWriteToLog(Commit cm) {
+        FileWriter fw;
+        try {
+            fw = new FileWriter(myConfig.getDNSFile(),true); //the true will append the new data
+            fw.write(cm.getValue() + System.getProperty( "line.separator" ));//appends the string to the file
+            fw.close();
+        } catch(IOException ioe) {
+            System.err.println("IOException: " + ioe.getMessage());
+        }
+    }
+>>>>>>> 7827640d27fbd057ad5c82e0156e1367614b2621
 
 }
