@@ -141,15 +141,14 @@ public class Round {
     public DNSEntry findPromiseMaxIDValue() {
         int maxsrc = 0;
         for (Promise p : this.promiseMap.values()) {
-        	/* TODO why use || here? */
             if ((this.promiseMap.get(maxsrc) == null) || 
                     (p.getAcceptedId() > (this.promiseMap.get(maxsrc)).getAcceptedId())) {
                 maxsrc = p.getSrc();
             }
         }
         System.out.println("[Round Class] [findPromiseMaxIDValue] value is: " +
-                                  this.promiseMap.get(maxsrc).getAccptedValue());
-        return this.promiseMap.get(maxsrc).getAccptedValue();     
+                                  this.promiseMap.get(maxsrc).getacceptedValue());
+        return this.promiseMap.get(maxsrc).getacceptedValue();     
     }
     /**
      * If any rejects, find the largest minproposal ID in those rejects.

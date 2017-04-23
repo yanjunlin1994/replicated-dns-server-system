@@ -58,8 +58,10 @@ public class LeaderRoutine implements Runnable {
         System.out.println("[LeaderRoutine] have a new proposal!");
         /* TODO why poll the proposal out? */
         Proposal np = this.currentLeader.pollProposal(); 
+        int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
+        np.setProposalId(newProposalNum);  
         /* find an appropriate log id for the new proposal */
-        logId = me.getDnsfile().getMinUnchosenLogId();
+        this.logId = me.getDnsfile().getMinUnchosenLogId();
         np.setLogId(logId);
         
         int result = -1;
@@ -87,21 +89,9 @@ public class LeaderRoutine implements Runnable {
         Proposal np = new Proposal(p);//copy the proposal argument
         int prepareSucceed = -1; //-1: fail; 0:succeed
         /* keep trying new proposal number until prepare succeed */
-        while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {
-<<<<<<< HEAD
-            int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
-            np.setProposalId(newProposalNum);
-            this.SetNewRoundParam(np);
-            /* If the prepare doesn't succeed, start another prepare proposal again */
-=======
-            if (this.interRoundProposal == null) {
-                int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
-                np.setID(newProposalNum);      
-            }
-            
+        while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {     
             this.SetNewRoundParam(np);
             this.interRoundProposal = null; //clear the interRound proposal
->>>>>>> 7827640d27fbd057ad5c82e0156e1367614b2621
             if (this.prepare(np) != -1) {
                 prepareSucceed = 0;
                 break;
@@ -118,6 +108,7 @@ public class LeaderRoutine implements Runnable {
         } else {
 //            this.commit();
         	/* the proposed value is chosen */
+            //TODO: write value make it a function
         	DNSFile dnsfile = me.getDnsfile();
         	Entry entry = dnsfile.readEntry(logId);
         	entry.setChosen();
@@ -131,7 +122,7 @@ public class LeaderRoutine implements Runnable {
      * @param np
      */
     public void SetNewRoundParam(Proposal np) {
-        this.currentRound = new Round(logId, myID, (np.getProposalId() / 10));
+        this.currentRound = new Round(myID, (np.getProposalId() / 10), logId);
         this.currentRound.setCurrentProposal(np);    
         System.out.println("[LeaderRoutine] [SetNewRound] RoundID: "+this.currentRound.getRoundID() + "Proposal is : " + np);
     }
@@ -149,10 +140,9 @@ public class LeaderRoutine implements Runnable {
                 Promise aPromise = lisnode.LeaderPrepareProposal(p);
                 this.currentRound.addPromiseMap(aPromise);// add to promise map
                 System.out.println("[LeaderRoutine] [prepare] prepare Recived: " + aPromise);
-                /* TODO: Why do we need ifrealPromise? */
-//                if (aPromise.getIsIfrealPromise()) {
+                if (aPromise.getIsIfrealPromise()) {
                     this.currentRound.increPromiseCount();
-//                }
+                }
             } catch (Exception e) {
                 System.err.println("[Leader Routine] [Prepare] Someone loses connection");
                 continue;//continue to other listeners
@@ -261,78 +251,10 @@ public class LeaderRoutine implements Runnable {
         }
         return newProposalID;
     }
-<<<<<<< HEAD
-//    //------------------- Commit -------------------------
-//    public void commit() {  
-//        Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
-//        System.out.println("[LeaderRoutine] [commit] + " + cm);
-//        this.currentRound.setCommit(cm);
-//        this.BroadCastCommit(cm);
-//        this.CommitWriteToLog(cm);
-//    }
-//    /**
-//     * send commits to all acceptors
-//     */
-//    public void BroadCastCommit(Commit bc) {
-//        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
-//            try {
-//                int r = lisnode.LeaderCommitProposal(bc);
-//                System.out.println("[LeaderRoutine] [BroadCastCommit] commit Recived: " + bc);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }  
-//    }
-//    /**
-//     * Write to disk
-//     * @param cm
-//     */
-//    public void CommitWriteToLog(Commit cm) {
-//        FileWriter fw;
-//        try {
-//            fw = new FileWriter(myConfig.getDNSFile(),true); //the true will append the new data
-//            fw.write(cm.getValue() + System.getProperty( "line.separator" ));//appends the string to the file
-//            fw.close();
-//        } catch(IOException ioe) {
-//            System.err.println("IOException: " + ioe.getMessage());
-//        }
-//    }
-=======
     //------------------- Commit -------------------------
-    public void commit() {  
-        Commit cm = new Commit(this.currentRound.getAcceptProposal().getValue());
-        System.out.println("[LeaderRoutine] [commit] + " + cm);
-        this.currentRound.setCommit(cm);
-        this.BroadCastCommit(cm);//x
-        this.CommitWriteToLog(cm);
+    public void commit() {
+        System.out.println("[LeaderRoutine] [commit]");
+        //TODO:
     }
-    /**
-     * send commits to all acceptors
-     */
-    public void BroadCastCommit(Commit bc) {
-        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
-            try {
-                int r = lisnode.LeaderCommitProposal(bc);
-                System.out.println("[LeaderRoutine] [BroadCastCommit] commit Recived: " + bc);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }  
-    }
-    /**
-     * Write to disk
-     * @param cm
-     */
-    public void CommitWriteToLog(Commit cm) {
-        FileWriter fw;
-        try {
-            fw = new FileWriter(myConfig.getDNSFile(),true); //the true will append the new data
-            fw.write(cm.getValue() + System.getProperty( "line.separator" ));//appends the string to the file
-            fw.close();
-        } catch(IOException ioe) {
-            System.err.println("IOException: " + ioe.getMessage());
-        }
-    }
->>>>>>> 7827640d27fbd057ad5c82e0156e1367614b2621
 
 }

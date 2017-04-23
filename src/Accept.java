@@ -19,41 +19,25 @@ public class Accept implements Serializable {
     public int getLogId() {
     	return logId;
     }
-	public int getID() {
+	public int getProposalID() {
 		return proposalId;
 	}
 	public void setProposalId(int proposalId) {
 		this.proposalId = proposalId;
 	}
+	public void setLogId(int logId) {
+        this.logId = logId;
+    }
 	public DNSEntry getValue() {
 		return dnsentry;
 	}
 	public void setAcceptedValue(DNSEntry dnsentry) {
 		this.dnsentry = dnsentry;
 	}
-	public void setLogId(int logId) {
-		this.logId = logId;
-	}
-//    private String value;
-//    public Accept(int i, String c) {
-//        this.ID = i;
-//        this.value = c;
-//    }
-//    public int getID() {
-//        return this.ID;
-//    }
-//    public void setID(int iD) {
-//        this.ID = iD;
-//    }
-//    public String getValue() {
-//        return this.value;
-//    }
-//    public void setValue(String v) {
-//        this.value = v;
-//    }
-//    @Override
-//    public String toString() { 
-//        return "[Accept " + " ID." + this.ID + " " + this.value + "]";
-//    }
+	
+    @Override
+    public String toString() { 
+        return "[Accept " + " ID." + this.proposalId + " " + this.dnsentry + "]";
+    }
 
 }

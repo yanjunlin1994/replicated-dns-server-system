@@ -17,14 +17,14 @@ public class DNSEntry implements Serializable {
 	public byte[] getDns() {
 		return dns;
 	}
-	public void setDns(byte[] dns) {
-		System.arraycopy(this.dns, 0, dns, 0, DNS_MAXLENGTH);
+	public void setDns(byte[] ds) {
+		System.arraycopy(ds, 0, this.dns, 0, DNS_MAXLENGTH);
 	}
 	public byte[] getIp() {
 		return ip;
 	}
-	public void setIp(byte[] ip) {
-		System.arraycopy(this.ip, 0, ip, 0, IP_MAXLENGTH);
+	public void setIp(byte[] i) {
+		System.arraycopy(i, 0, this.ip, 0, IP_MAXLENGTH);
 	}
 	/**
 	 * Set dns field.
@@ -33,7 +33,8 @@ public class DNSEntry implements Serializable {
 		if (dns.length() > DNS_MAXLENGTH) {
 			System.err.println("[DNSEntry setdns] string length exceeds limit.");
 		}
-		System.arraycopy(dns.toCharArray(), 0, this.dns, 0, dns.length());
+		//TODO:length
+		System.arraycopy(dns.getBytes(), 0, this.dns, 0, dns.length());
 	}
 	/**
 	 * Set ip field.
@@ -42,7 +43,8 @@ public class DNSEntry implements Serializable {
 		if (ip.length() > IP_MAXLENGTH) {
 			System.err.println("[DNSEntry setip] string length exceeds limit.");
 		}
-		System.arraycopy(ip.toCharArray(), 0, this.ip, 0, ip.length());
+		//TODO:length
+		System.arraycopy(ip.getBytes(), 0, this.ip, 0, ip.length());
 	}
 	/**
 	 * Return DNSEntry object's byte representation.
@@ -68,6 +70,7 @@ public class DNSEntry implements Serializable {
 		if (dns.length() > DNS_MAXLENGTH || ip.length() > IP_MAXLENGTH) {
 			System.err.println("[DNSEntry(dns, ip)] string length exceeds limit.");
 		}
+		//TODO: length
 		System.arraycopy(dns.getBytes(), 0, this.dns, 0, dns.length());
 		System.arraycopy(ip.getBytes(), 0, this.ip, 0, ip.length());
 	}

@@ -4,11 +4,6 @@ public class Proposal implements Serializable {
 	private int logId;
     private int proposalId;
     private DNSEntry dnsentry;
-//    private String value;
-//    public Proposal(int i, String c) {
-//        this.ID = i;
-//        this.value = c;
-//    }
     public Proposal(int logId, int proposalId, DNSEntry dnsentry) {
     	this.logId = logId;
     	this.proposalId = proposalId;
@@ -21,8 +16,9 @@ public class Proposal implements Serializable {
      * @param p
      */
     public Proposal(Proposal p) {
+        this.logId = p.getLogId();
         this.proposalId = p.getProposalId();
-        this.dnsentry = p.getDnsentry();
+        this.dnsentry = p.getDnsentry();//TODO:
     }
     public int getLogId() {
 		return logId;
@@ -42,21 +38,6 @@ public class Proposal implements Serializable {
 	public void setDnsentry(DNSEntry dnsentry) {
 		this.dnsentry = dnsentry;
 	}
-	//    
-//    public int getID() {
-//        return this.ID;
-//    }
-//
-//    public void setID(int iD) {
-//        this.ID = iD;
-//    }
-//
-//    public String getValue() {
-//        return this.value;
-//    }
-//    public void setValue(String v) {
-//        this.value = v;
-//    }
     @Override
     public String toString() { 
         return "[Log ID. " + this.logId + " Proposal ID." + this.proposalId + " " + this.dnsentry + "]";

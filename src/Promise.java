@@ -4,16 +4,15 @@ import java.io.Serializable;
  * <accepted id, accepted value>
  */
 public class Promise implements Serializable {
-	private int acceptedId;
-	private DNSEntry accptedValue;
+    private static final long serialVersionUID = -2120051092929991471L;
+    private int acceptedId;
+	private DNSEntry acceptedValue;
     private int src;
-//    private int ID;
-//    private String value;
     private boolean ifrealPromise;//could send the nack back as a type of promise
     public Promise(int src, int acceptedId, DNSEntry acceptedValue, boolean realPromise) {
     	this.src = src;
     	this.acceptedId = acceptedId;
-    	this.accptedValue = accptedValue;
+    	this.acceptedValue = acceptedValue;
     	this.ifrealPromise = realPromise;
     }
     public int getAcceptedId() {
@@ -22,31 +21,26 @@ public class Promise implements Serializable {
 	public void setAcceptedId(int acceptedId) {
 		this.acceptedId = acceptedId;
 	}
-	public DNSEntry getAccptedValue() {
-		return accptedValue;
+	public DNSEntry getacceptedValue() {
+		return acceptedValue;
 	}
-	public void setAccptedValue(DNSEntry accptedValue) {
-		this.accptedValue = accptedValue;
+	public void setacceptedValue(DNSEntry acceptedValue) {
+		this.acceptedValue = acceptedValue;
 	}
 	public boolean isIfrealPromise() {
 		return ifrealPromise;
 	}
 	@Override
 	public String toString() { 
-	    return "[Promise from " + this.src + "  " + this.ifrealPromise + " Promise ID." + this.acceptedId + " " + this.accptedValue + "]";
+	    return "[Promise from " + this.src + "  " + this.ifrealPromise + " Promise ID." + this.acceptedId + " " + this.acceptedValue + "]";
 	}
-//	public Promise(int s, int i, String c) {
-//        this.src = s;
-//        this.ID = i;
-//        this.value = c;
-//        this.ifrealPromise = false;
-//    }
+
     public Promise(Promise p) {
         this.src = p.getSrc();
         this.acceptedId = p.getAcceptedId();
-        this.accptedValue = new DNSEntry();
-        this.accptedValue.setIp(p.getAccptedValue().getIp());
-        this.accptedValue.setDns(p.getAccptedValue().getDns());
+        this.acceptedValue = new DNSEntry();
+        this.acceptedValue.setIp(p.getacceptedValue().getIp());
+        this.acceptedValue.setDns(p.getacceptedValue().getDns());
         this.ifrealPromise = p.getIsIfrealPromise();
     }
 	  public int getSrc() {
@@ -55,28 +49,12 @@ public class Promise implements Serializable {
 	  public void setSrc(int src) {
 	      this.src = src;
 	  }
-//    public int getID() {
-//        return this.ID;
-//    }
-//    public void setID(int iD) {
-//        this.ID = iD;
-//    }
-//    public String getValue() {
-//        return this.value;
-//    }
-//    public void setValue(String v) {
-//        this.value = v;
-//    }
+
     public boolean getIsIfrealPromise() {
         return this.ifrealPromise;
     }
     public void setIfrealPromise(boolean i) {
         this.ifrealPromise = i;
     }
-//    @Override
-//    public String toString() { 
-//        return "[Promise from " + this.src + "  " + this.ifrealPromise + " Promise ID." + this.ID + " " + this.value + "]";
-//    }
-    
 
 }
