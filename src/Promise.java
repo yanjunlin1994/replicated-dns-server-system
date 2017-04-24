@@ -32,7 +32,7 @@ public class Promise implements Serializable {
 	}
 	@Override
 	public String toString() { 
-	    return "[Promise from " + this.src + "  " + this.ifrealPromise + " Promise ID." + this.acceptedId + " " + this.acceptedValue + "]";
+	    return "[Promise from node " + this.src + "," + this.ifrealPromise + ", id:" + this.acceptedId + "," + this.acceptedValue + "]";
 	}
 
     public Promise(Promise p) {

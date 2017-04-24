@@ -8,15 +8,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.HashMap;
 public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
-    private Configuration myConfig;
+	private static final long serialVersionUID = -1227249378955929227L;
+	private Configuration myConfig;
     private Node me;
     private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
     private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
-    
     private Leader currentLeader;
     private AcceptorContent myAcceptorContent;//TODO: should be stored in disk for crash recovery
                                                //together with round number
-    
     /**
      * Constructor
      * @param config
@@ -50,7 +49,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     @Override
     public synchronized void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
         HeartBeatMessage mesg = h;
-        System.out.println("[ListenerImpl][LeaderHeartBeat] [Recieve LeaderHeartBeat] " + mesg);
+//        System.out.println("[ListenerImpl][LeaderHeartBeat] [Recieve LeaderHeartBeat] " + mesg);
         InterThreadMessage lhb= new InterThreadMessage(mesg.getMyID(), this.me.getNodeID(), 
                                                 "HeartBeatMessage", mesg.toString(), mesg.getSeqNum());
         this.AcceptorListenerCommQueue.add(lhb);
@@ -66,7 +65,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public synchronized String clientRequest(DNSEntry dnsentry) throws RemoteException {
         String response;
         System.out.println("[Recieve clientRequest] " + dnsentry);
-        System.out.println("[check current leader: " + this.currentLeader.getID() + "]");
+//        System.out.println("[check current leader: " + this.currentLeader.getID() + "]");
         if (me.getNodeID() == this.currentLeader.getID()) {
         	/* Once receiving a new request, leader adds the request into the processQueue. */
             response = "[ I am leader, I can handle this request]"; 
@@ -97,34 +96,29 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         DNSFile dnsfile = me.getDnsfile();
         /* get the entry for current log id. If the slave does not have an entry, return an empty entry */
         Entry entry = dnsfile.readEntry(p.getLogId());
+        boolean realPromise = false;
         if (p.getProposalId() > entry.getMinProposalId()) {
         	/* update the minProposalId in log file */
         	entry.setMinProposalId(p.getProposalId());
+        	realPromise = true;
+        	/* slave updates the minProposalId in the entry */
         	dnsfile.writeEntry(entry);
-        	System.out.println("[Recieve LeaderPrepareProposal Promise!]    ");
-        	System.out.println(this.myAcceptorContent);
+        	System.out.println("[Recieve LeaderPrepareProposal] promise, update proposalId: " + p.getProposalId() + " entry:" + entry);
+        } else {
+        	System.out.println("[Recieve LeaderPrepareProposal no promise, proposalId " + p.getProposalId() +" smaller than original: " + entry.getMinProposalId() + " entry:" + entry);
         }
         Promise pro = null;
-        if (!entry.getdns().hasAccepted()) {
-        	pro = new Promise(this.me.getNodeID(), entry.getAcceptedProposalId(), entry.getdns(), false);
+        /* If the acceptor has accepted the value, return it to the proposer */
+        if (entry.getdns().hasAccepted()) {
+//        	pro = new Promise(this.me.getNodeID(), entry.getAcceptedProposalId(), entry.getdns(), realPromise);
+        	System.out.println("[acceptor received prepare, already accepted] ");
         } else { 
-        	/* set accptedProposal as 1 and acceptedValue as null if the node hasn't accepted any proposal */
-        	pro = new Promise(this.me.getNodeID(), -1, null, true);
+        	/* set accptedProposal as -1 and acceptedValue as null if the node hasn't accepted any proposal */
+//        	pro = new Promise(this.me.getNodeID(), -1, new Entry(p.getLogId()).getdns(), realPromise);
+        	System.out.println("[acceptor received prepare, haven't accepted] ");
         }
+        pro = new Promise(this.me.getNodeID(), entry.getAcceptedProposalId(), entry.getdns(), realPromise);
         return pro;
-//        Promise pro = new Promise(this.me.getNodeID(), this.myAcceptorContent.getAcceptedProposal(), this.myAcceptorContent.getAcceptedValue());
-//        if (p.getLogId() > this.myAcceptorContent.getMinProposal()) {
-//            //set my MinProposal number
-//            this.myAcceptorContent.setMinProposal(p.getID());
-//            System.out.println("[Recieve LeaderPrepareProposal Promise!]    ");
-//            System.out.println(this.myAcceptorContent);
-//            pro.setIfrealPromise(true);
-//            return pro;
-//        } else {
-//            System.out.println("[Recieve LeaderPrepareProposal No promise : (  ]     ");
-//            System.out.println(this.myAcceptorContent);
-//            return pro;
-//        }
     }
     /**
      * Acceptor receive an accept request from leader.
@@ -134,43 +128,19 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
         System.out.println("[Recieve LeaderAcceptProposal] " + a);
         DNSFile dnsfile = me.getDnsfile();
-        Entry entry = dnsfile.readEntry(a.getID());
-        if (a.getID() > entry.getMinProposalId()) {
-        	entry.setAcceptedProposalId(a.getID());
-        	entry.setMinProposalId(a.getID());
+        Entry entry = dnsfile.readEntry(a.getProposalID());
+        Acknlg ack = null;
+        if (a.getProposalID() >= entry.getMinProposalId()) {
+        	entry.setAcceptedProposalId(a.getProposalID());
+        	entry.setMinProposalId(a.getProposalID());
         	entry.setdnsEntry(a.getValue());
         	dnsfile.writeEntry(entry);
+        	ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), true);
+        	System.out.println("[Recieve LeaderAcceptProposal ACK! ] " + ack);
+        } else {
+        	ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), false);
+        	System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack);
         }
-        Acknlg ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId());
         return ack;
-//        Acknlg ack = new Acknlg(this.me.getNodeID(), this.myAcceptorContent.getMinProposal());
-//        if (a.getID() >= this.myAcceptorContent.getMinProposal()) {
-//            this.myAcceptorContent.setMinProposal(a.getID());
-//            this.myAcceptorContent.setAcceptedProposal(a.getID());
-//            this.myAcceptorContent.setAcceptedValue(a.getValue());
-//            System.out.println("[Recieve LeaderAcceptProposal ACK! ]");
-//            System.out.println(this.myAcceptorContent);
-//            ack.setIfrealAcknlg(true);
-//            return ack;
-//        } else {
-//            System.out.println("[Recieve LeaderAcceptProposal no ack ]");
-//            System.out.println(this.myAcceptorContent);
-//            return ack;
-//        }
-    }
-    /**
-     * Receive a commit from leader
-     */
-    @Override
-    public int LeaderCommitProposal(Commit c) throws RemoteException {
-        System.out.println("[Recieve LeaderCommitProposal] " + c);
-        Commit nc = new Commit(c);
-        this.myAcceptorContent.cleanContent();//clear to content in my current acceptor
-        return writeToCommitLog(nc);
-        
-    }
-    public int writeToCommitLog(Commit c) {
-        //TODO: write to commitLog file
-        return 0;
     }
 }

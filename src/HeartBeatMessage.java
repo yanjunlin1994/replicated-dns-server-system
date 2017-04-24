@@ -4,7 +4,7 @@ import java.io.Serializable;
  * A single heartbeat message
  *
  */
-public class HeartBeatMessage extends Message implements Serializable {
+public class HeartBeatMessage implements Serializable {
     private int myID;
     private String kind;  
     private String content;

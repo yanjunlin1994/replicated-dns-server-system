@@ -64,8 +64,6 @@ public class Node {
     public int proposalNumSetSize() {
         return this.proposalNumSet.size();
     }
-
-    
     @Override
     public String toString() { 
         return "I am Node " + this.nodeID;

@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class DNSEntry implements Serializable {
 	private static final long serialVersionUID = -2456546379723602208L;
@@ -18,13 +19,21 @@ public class DNSEntry implements Serializable {
 		return dns;
 	}
 	public void setDns(byte[] ds) {
-		System.arraycopy(ds, 0, this.dns, 0, DNS_MAXLENGTH);
+		if (ds.length > DNS_MAXLENGTH) {
+			System.err.println("[DNSEntry setdns] byte array length exceeds limit.");
+		}
+		System.arraycopy(ds, 0, this.dns, 0, ds.length);
+		Arrays.fill(this.dns, ds.length, DNS_MAXLENGTH, (byte)0);
 	}
 	public byte[] getIp() {
 		return ip;
 	}
 	public void setIp(byte[] i) {
-		System.arraycopy(i, 0, this.ip, 0, IP_MAXLENGTH);
+		if (i.length > IP_MAXLENGTH) {
+			System.err.println("[DNSEntry setip] byte array length exceeds limit.");
+		}
+		System.arraycopy(i, 0, this.ip, 0, ip.length);
+		Arrays.fill(this.ip, i.length, IP_MAXLENGTH, (byte)0);
 	}
 	/**
 	 * Set dns field.
@@ -33,8 +42,8 @@ public class DNSEntry implements Serializable {
 		if (dns.length() > DNS_MAXLENGTH) {
 			System.err.println("[DNSEntry setdns] string length exceeds limit.");
 		}
-		//TODO:length
 		System.arraycopy(dns.getBytes(), 0, this.dns, 0, dns.length());
+		Arrays.fill(this.dns, dns.length(), DNS_MAXLENGTH, (byte)0);
 	}
 	/**
 	 * Set ip field.
@@ -43,8 +52,8 @@ public class DNSEntry implements Serializable {
 		if (ip.length() > IP_MAXLENGTH) {
 			System.err.println("[DNSEntry setip] string length exceeds limit.");
 		}
-		//TODO:length
 		System.arraycopy(ip.getBytes(), 0, this.ip, 0, ip.length());
+		Arrays.fill(this.ip, ip.length(), IP_MAXLENGTH, (byte)0);
 	}
 	/**
 	 * Return DNSEntry object's byte representation.
@@ -70,9 +79,10 @@ public class DNSEntry implements Serializable {
 		if (dns.length() > DNS_MAXLENGTH || ip.length() > IP_MAXLENGTH) {
 			System.err.println("[DNSEntry(dns, ip)] string length exceeds limit.");
 		}
-		//TODO: length
 		System.arraycopy(dns.getBytes(), 0, this.dns, 0, dns.length());
+		Arrays.fill(this.dns, dns.length(), DNS_MAXLENGTH, (byte)0);
 		System.arraycopy(ip.getBytes(), 0, this.ip, 0, ip.length());
+		Arrays.fill(this.ip, ip.length(), IP_MAXLENGTH, (byte)0);
 	}
 	/**
 	 * Create DNSEntry from byte array read from a line.
@@ -86,7 +96,7 @@ public class DNSEntry implements Serializable {
 		System.arraycopy(byteArray, DNS_MAXLENGTH, this.ip, 0, IP_MAXLENGTH);
 	}
 	public boolean hasAccepted() {
-		if (new String(dns).equals("null") || new String(ip).equals("null")) {
+		if (new String(dns).trim().equals("null") || new String(ip).trim().equals("null")) {
 			return false;
 		} else {
 			return true;

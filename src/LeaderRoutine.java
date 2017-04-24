@@ -1,12 +1,4 @@
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-/**
- * 
- *
- */
 public class LeaderRoutine implements Runnable {
     private int myID;
     private Configuration myConfig;
@@ -38,7 +30,7 @@ public class LeaderRoutine implements Runnable {
         Thread leaderHB = new Thread(new LeaderHeartBeat(this.myID, this.myConfig));
         leaderHB.start();
         /* start dealing with proposal */
-        System.out.println("[LeaderRoutine Routine wating for proposal]");
+        System.out.println("[LeaderRoutine start running]");
         while (true) {
             if (this.currentLeader.getProcessQueueSize() > 0) {
                 try {
@@ -55,7 +47,7 @@ public class LeaderRoutine implements Runnable {
      * @throws Exception 
      */
     public synchronized void ReceiveNewProposal() throws Exception {
-        System.out.println("[LeaderRoutine] have a new proposal!");
+        System.out.println("[LeaderRoutine] new round");
         /* TODO why poll the proposal out? */
         Proposal np = this.currentLeader.pollProposal(); 
         int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
@@ -68,14 +60,17 @@ public class LeaderRoutine implements Runnable {
         /* Before sending the proposal, initialize the transaction information in it */
         while (result != 0) {
         	/* while having rejects.
-        	 * If it is this proposal is from last round, it should update its proposal id and keep the same log id.
+        	 * If this proposal is from last round, it should update its proposal id and keep the same log id.
         	 * If it is a new proposal from client, start with smallest proposal id and choose the least unchosen id in the log.
         	 */
             if (this.interRoundProposal != null) {
+            	System.out.println("Continue with last proposal");
                 np = this.interRoundProposal;
             }
             DNSFile dnsfile = me.getDnsfile();
+            /* leader write its proposal into the log */
             dnsfile.writeEntry(new Entry(np.getLogId(), np.getProposalId(), np.getProposalId(), np.getDnsentry()));
+            System.out.println("[leader] write new proposal into log");
             result = this.NewRoundHandler(np);
         }
     }
@@ -85,13 +80,15 @@ public class LeaderRoutine implements Runnable {
      * @throws Exception 
      */
     public int NewRoundHandler(Proposal p) throws Exception {
-        System.out.println("[LeaderRoutine] [NewRoundHandler]");
+//        System.out.println("[LeaderRoutine] [NewRoundHandler]");
+    	/* TODO the proposal id of the second proposal is not correct. It starts with 10. Actually it should start with 0.*/
         Proposal np = new Proposal(p);//copy the proposal argument
         int prepareSucceed = -1; //-1: fail; 0:succeed
         /* keep trying new proposal number until prepare succeed */
         while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {     
             this.SetNewRoundParam(np);
             this.interRoundProposal = null; //clear the interRound proposal
+            /* start prepare phase */
             if (this.prepare(np) != -1) {
                 prepareSucceed = 0;
                 break;
@@ -100,20 +97,16 @@ public class LeaderRoutine implements Runnable {
         if (prepareSucceed == -1) {
             throw new Exception("[LeaderRoutine] [NewRoundHandler] [prepare error] proposalNumSet exhausted");
         }
+        /* continue with accept phase */
         if (this.accept() == -1) {  
             if (this.RejectHandler() == -1) {
                 throw new Exception("[LeaderRoutine] [NewRoundHandler] [reject handle ERROR]");
             }
             return -1;
         } else {
-//            this.commit();
-        	/* the proposed value is chosen */
-            //TODO: write value make it a function
-        	DNSFile dnsfile = me.getDnsfile();
-        	Entry entry = dnsfile.readEntry(logId);
-        	entry.setChosen();
-        	dnsfile.writeEntry(entry);
-            return 0;
+        	/* successfully commit */
+            this.commit();
+        	return 0;
         }
     }
     //------------------- New Round Parameters -----------------------
@@ -124,7 +117,7 @@ public class LeaderRoutine implements Runnable {
     public void SetNewRoundParam(Proposal np) {
         this.currentRound = new Round(myID, (np.getProposalId() / 10), logId);
         this.currentRound.setCurrentProposal(np);    
-        System.out.println("[LeaderRoutine] [SetNewRound] RoundID: "+this.currentRound.getRoundID() + "Proposal is : " + np);
+        System.out.println("[LeaderRoutine] [SetNewRound] log: "+this.currentRound.getLogId() + " proposalid: " + np.getProposalId() + "-> " + np);
     }
     //------------------- prepare -----------------------
     /**
@@ -139,7 +132,7 @@ public class LeaderRoutine implements Runnable {
             	/* Leader receive the promise from slaves */
                 Promise aPromise = lisnode.LeaderPrepareProposal(p);
                 this.currentRound.addPromiseMap(aPromise);// add to promise map
-                System.out.println("[LeaderRoutine] [prepare] prepare Recived: " + aPromise);
+                System.out.println("[LeaderRoutine] [prepare] Recived: " + aPromise);
                 if (aPromise.getIsIfrealPromise()) {
                     this.currentRound.increPromiseCount();
                 }
@@ -174,7 +167,7 @@ public class LeaderRoutine implements Runnable {
      */
     public Accept createNewAccept(){   
         DNSEntry modifiedValue = this.currentRound.findPromiseMaxIDValue();
-        if (modifiedValue == null) {
+        if (!modifiedValue.hasAccepted()) {
             //use current proposal value without modifying it
             System.out.println("[LeaderRoutine] [createNewAccept] no existing value before, use my own value");                
             modifiedValue = this.currentRound.getCurrentProposal().getDnsentry();
@@ -209,11 +202,7 @@ public class LeaderRoutine implements Runnable {
     /**
      * if accept fails, create a new round with 
      * proposal number larger than reject's minproposal
-     * and origin accpet value
-     */
-    /**
-     * Create a new proposal Number
-     * @return
+     * and origin accpet value.
      */
     public int RejectHandler() {
         int newProposalID;
@@ -254,7 +243,14 @@ public class LeaderRoutine implements Runnable {
     //------------------- Commit -------------------------
     public void commit() {
         System.out.println("[LeaderRoutine] [commit]");
-        //TODO:
+        /* the proposed value is chosen */
+        //TODO: write value make it a function
+    	DNSFile dnsfile = me.getDnsfile();
+    	/* TODO write minUnchosenLogId into disk */
+    	dnsfile.incrementMinUnchosenLogId(logId);
+    	Entry entry = dnsfile.readEntry(logId);
+    	entry.setChosen();
+    	System.out.println("[commit an entry] " + entry);
+    	dnsfile.writeEntry(entry);
     }
-
 }

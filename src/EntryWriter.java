@@ -36,7 +36,7 @@ public class EntryWriter {
 		try {
 			byte[] byteArray = new byte[ENTRY_SIZE];
 			int target = headcount + logId * ENTRY_SIZE;
-			System.out.println("2: target "+target+" filelength:"+file.length());
+//			System.out.println("2: target "+target+" filelength:"+file.length());
 			raf.seek(target);
 			int filelength = (int) file.length();
 			if (target >= filelength) {
@@ -79,6 +79,7 @@ public class EntryWriter {
 		try {
 			int target = headcount + logId * ENTRY_SIZE;
 			raf.seek(target);
+			System.out.println("\twrite log at: " + target + ", " + entry);
 			raf.write(entry.toByte());
 			raf.close();
 		} catch (IOException e) {

@@ -16,15 +16,14 @@ public class LeaderHeartBeat implements Runnable {
         System.out.println("[LeaderRoutine] [LeaderHeartBeat starts]");
         try {            
             HeartBeatMessage hbm = new HeartBeatMessage(this.myID, "leader heartbeat", "I am alive :)");
-            while (true) {     
+            while (true) {
                 this.MulticastLeaderHeartBeat(hbm);
                 hbm.increSeqNum();
                 TimeUnit.SECONDS.sleep(5); //send heartbeat messsage every 5 seconds
-            }  
+            }
         } catch (InterruptedException e) {
             System.err.println("[LeaderRoutine] [LeaderHeartBeat] run fails ");
-//            e.printStackTrace();
-        }        
+        } 
     }
     public void MulticastLeaderHeartBeat(HeartBeatMessage hbmessage) {
         for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {

@@ -4,10 +4,10 @@ public class Acknlg implements Serializable {
     private int src;
     private int minProposal; //min proposal id
     private boolean ifrealAcknlg; //could send the nack back as a type of promise
-    public Acknlg(int s, int mp) {
+    public Acknlg(int s, int mp, boolean real) {
         this.src = s;
         this.minProposal = mp;
-        this.ifrealAcknlg = false;
+        this.ifrealAcknlg = real;
     }
     public Acknlg(Acknlg a) {
         this.src = a.getSrc();

@@ -1,6 +1,5 @@
 /**
  * Acceptor content.
- *
  */
 public class AcceptorContent {
     private int myID;

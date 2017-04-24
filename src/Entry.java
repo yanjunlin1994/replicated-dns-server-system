@@ -40,6 +40,7 @@ public class Entry implements Serializable {
 			oos.writeInt(minProposalId);
 			oos.writeInt(acceptedProposalId);
 			oos.write(dnsEntry.toByte());
+			oos.writeObject(System.getProperty("line.seperator"));
 			oos.flush();
 			baos.flush();
 			re = baos.toByteArray();
@@ -56,13 +57,13 @@ public class Entry implements Serializable {
 	 * @throws ClassNotFoundException 
 	 */
 	protected Entry(byte[] byteArray) throws IOException, ClassNotFoundException {
-		ByteArrayInputStream bais2 = new ByteArrayInputStream(byteArray);
-		ObjectInputStream ois2 = new ObjectInputStream(bais2);
-		logId = ois2.readInt();
-		minProposalId = ois2.readInt();
-		acceptedProposalId = ois2.readInt();
+		ByteArrayInputStream bais = new ByteArrayInputStream(byteArray);
+		ObjectInputStream ois = new ObjectInputStream(bais);
+		logId = ois.readInt();
+		minProposalId = ois.readInt();
+		acceptedProposalId = ois.readInt();
 		byte[] array = new byte[DNSENTRY_SIZE];
-		int entrylen = ois2.read(array);
+		int entrylen = ois.read(array);
 		if (entrylen < DNSENTRY_SIZE) {
 			throw new RuntimeException("[Entry byteArray] Didn't read enough bytes");
 		} else {

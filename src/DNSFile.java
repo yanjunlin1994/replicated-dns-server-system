@@ -37,6 +37,16 @@ public class DNSFile {
 		this.minUnchosenLogId = id;
 	}
 	public int getMinUnchosenLogId() {
+		System.out.println("[get MinUnchosenLogId] " + minUnchosenLogId);
 		return minUnchosenLogId;
+	}
+	public void incrementMinUnchosenLogId(int logId) {
+		if (minUnchosenLogId == logId) {
+			minUnchosenLogId += 1;
+			while(readEntry(minUnchosenLogId).isChosen()) {
+				minUnchosenLogId += 1;
+			}
+		}
+		System.out.println("[update MinUnchosenLogId] " + minUnchosenLogId);
 	}
 }

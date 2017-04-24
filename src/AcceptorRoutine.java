@@ -3,7 +3,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Acceptor routine
- *
  */
 public class AcceptorRoutine implements Runnable {
     private int myID;
@@ -59,7 +58,7 @@ public class AcceptorRoutine implements Runnable {
      */
     public void processInterThreadMessage(InterThreadMessage newM) {
         if (newM.getKind().equals("HeartBeatMessage")) {
-            System.out.println("[Acceptor Routine] [processInterThreadMessage] new Leader HeartBeat message");
+//            System.out.println("[Acceptor Routine] [processInterThreadMessage] new Leader HeartBeat message");
             this.setLatestHeartbeat(System.currentTimeMillis()); 
         }
     }

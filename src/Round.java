@@ -21,8 +21,7 @@ public class Round {
     private HashMap<Integer, Acknlg> AcknlgMap;
     private boolean rejAck;
     /** record the rej's minproposal ID */
-    private HashSet<Integer> rejAcknlgSet; 
-    private Commit commit;
+    private HashSet<Integer> rejAcknlgSet;
     private int logId;
     public Round(int nid, int rid, int logId) {
         this.nodeID = nid;
@@ -61,12 +60,6 @@ public class Round {
     }
     public void setAcceptProposal(Accept acceptProposal) {
         this.acceptProposal = acceptProposal;
-    }
-    public Commit getCommit() {
-        return commit;
-    }
-    public void setCommit(Commit commit) {
-        this.commit = commit;
     }
     //--------------- Count
     public int getPromiseCount() {
@@ -139,16 +132,24 @@ public class Round {
      * @return max value
      */
     public DNSEntry findPromiseMaxIDValue() {
-        int maxsrc = 0;
-        for (Promise p : this.promiseMap.values()) {
-            if ((this.promiseMap.get(maxsrc) == null) || 
-                    (p.getAcceptedId() > (this.promiseMap.get(maxsrc)).getAcceptedId())) {
-                maxsrc = p.getSrc();
-            }
-        }
-        System.out.println("[Round Class] [findPromiseMaxIDValue] value is: " +
-                                  this.promiseMap.get(maxsrc).getacceptedValue());
-        return this.promiseMap.get(maxsrc).getacceptedValue();     
+    	/* promiseMap: <Integer, Promise> 
+    	 * In the accepted promise in the promiseMap, find the source node id with the maximum accpetedId.
+    	 */
+    	int maxsrc = -1, maxAcceptedId = -1;
+    	for (Promise p: this.promiseMap.values()) {
+    		if (p.getacceptedValue().hasAccepted() && p.getAcceptedId() > maxAcceptedId) {
+    			maxAcceptedId = p.getAcceptedId();
+    			maxsrc = p.getSrc();
+    		}
+    	}
+    	if (maxsrc == -1) {
+    		System.out.println("[Round Class] [findPromiseMaxIDValue] no accept dnsEntry ");
+    		return new DNSEntry();
+    	} else {
+	        System.out.println("[Round Class] [findPromiseMaxIDValue] value is: " +
+	                                  this.promiseMap.get(maxsrc).getacceptedValue());
+	        return this.promiseMap.get(maxsrc).getacceptedValue();     
+    	}
     }
     /**
      * If any rejects, find the largest minproposal ID in those rejects.
