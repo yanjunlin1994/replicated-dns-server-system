@@ -40,7 +40,6 @@ public class Entry implements Serializable {
 			oos.writeInt(minProposalId);
 			oos.writeInt(acceptedProposalId);
 			oos.write(dnsEntry.toByte());
-			oos.writeObject(System.getProperty("line.seperator"));
 			oos.flush();
 			baos.flush();
 			re = baos.toByteArray();

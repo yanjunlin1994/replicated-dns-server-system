@@ -128,7 +128,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
         System.out.println("[Recieve LeaderAcceptProposal] " + a);
         DNSFile dnsfile = me.getDnsfile();
-        Entry entry = dnsfile.readEntry(a.getProposalID());
+        Entry entry = dnsfile.readEntry(a.getLogId());
         Acknlg ack = null;
         if (a.getProposalID() >= entry.getMinProposalId()) {
         	entry.setAcceptedProposalId(a.getProposalID());
@@ -136,7 +136,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         	entry.setdnsEntry(a.getValue());
         	dnsfile.writeEntry(entry);
         	ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), true);
-        	System.out.println("[Recieve LeaderAcceptProposal ACK! ] " + ack);
+        	System.out.println("[Recieve LeaderAcceptProposal ACK! ] " + ack + ", "+entry);
         } else {
         	ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), false);
         	System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack);

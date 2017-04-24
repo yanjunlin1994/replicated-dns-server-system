@@ -8,20 +8,50 @@ import java.io.RandomAccessFile;
 public class EntryWriter {
 	private File file;
 	/* Number of bytes when Entry object is serialized */
-	private static int ENTRY_SIZE = new Entry(0).toByte().length;
+	private static final int ENTRY_SIZE = new Entry(0).toByte().length;
+	private static final int INT_BYTE_SIZE = 4;
+	private static final String FIRSTLINE = "log id, minProposalId, acceptedProposalId, dns:ip" + System.getProperty("line.separator");
 	private RandomAccessFile raf;
-	private int headcount;
+	/* headcount is the length of the first line */
+	private int headcount = FIRSTLINE.length() + System.getProperty("line.separator").length() + INT_BYTE_SIZE;
 	public EntryWriter(String filename) throws IOException {
 		file = new File(filename);
-		String firstline = "log id, minProposalId, acceptedProposalId, dns:ip" + System.getProperty("line.separator");
-		/* headcount is the length of the first line */
-		headcount = firstline.length();
 		if (!file.exists()) {
 			file.createNewFile();
 			raf = new RandomAccessFile(file, "rw");
-			raf.writeBytes(firstline);
+			raf.writeBytes(FIRSTLINE);
+			raf.writeInt(-1);
+			raf.writeBytes(System.getProperty("line.seperator"));
 			raf.close();
 		}
+	}
+	public void writeMinUnchosenLogId(int id) {
+		try {
+			raf = new RandomAccessFile(file, "rw");
+			raf.seek(FIRSTLINE.length());
+			int minUnchosenLogId = raf.readInt();
+			raf.close();
+			return minUnchosenLogId;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	public int readMinUnchosenLogId() {
+		try {
+			raf = new RandomAccessFile(file, "rw");
+			raf.seek(FIRSTLINE.length());
+			int minUnchosenLogId = raf.readInt();
+			raf.close();
+			return minUnchosenLogId;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return -1;
 	}
 	/**
 	 * read Entry object from dnsFile.
@@ -51,14 +81,10 @@ public class EntryWriter {
 					entry = new Entry(byteArray);
 				}
 			}
+			raf.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		try {
-			raf.close();
-		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return entry;
