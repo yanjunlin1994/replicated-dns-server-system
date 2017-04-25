@@ -18,6 +18,7 @@ public class LeaderRoutine implements Runnable {
     private int logId;
     private Node me;
     private boolean skipPrepare;
+    private ProposalID proposalId;
     /* Include the node Id of the nodes which has no more accepted value beyond current log id */
     private HashSet<Integer> noMoreAcceptedValueSet;
     public LeaderRoutine(int id, Configuration myConfig, Leader currentL, BlockingQueue<InterThreadMessage> i, BlockingQueue<InterThreadMessage> m) {
@@ -66,8 +67,10 @@ public class LeaderRoutine implements Runnable {
         Proposal np = this.currentLeader.pollProposal();
         /* The dnsfile.proposalId is set propoerly right now. Use it to set proposal id */
         np.setProposalId(me.getDnsfile().getProposalId());
+        proposalId = np.getProposalId();
         /* The dnsfile.minUnchosenLogId is set propoerly right now. Use it to set logId */
         np.setLogId(me.getDnsfile().getMinUnchosenLogId());
+        logId = np.getLogId();
         int result = NEW_ROUND;
         /* Before sending the proposal, initialize the transaction information in it */
         while (result == NEW_ROUND) {
@@ -113,6 +116,8 @@ public class LeaderRoutine implements Runnable {
         		this.me.getDnsfile().incrementProposalId();
         		np.setProposalId(this.me.getDnsfile().getProposalId());
         	}
+        } else {
+        	this.SetNewRoundParam(np);
         }
         /* continue with accept phase */
         if (this.accept() == FAIL) {
@@ -180,7 +185,13 @@ public class LeaderRoutine implements Runnable {
     }
     //------------------- Accept -------------------------
     public int accept() {
-        Accept acpt = this.createNewAccept();
+    	Accept acpt = null;
+    	/* If there is a prepare stage, check if acceptors return some accepted value */
+    	if (!skipPrepare) {
+    		acpt = this.createNewAccept();
+    	} else {
+    		acpt = new Accept(this.currentRound.getLogId(), this.currentRound.getCurrentProposal().getProposalId(), this.currentRound.getCurrentProposal().getDnsentry());
+    	}
         this.BroadCastAccept(acpt);
         if (this.currentRound.getRejAck()) {
             return FAIL;
@@ -193,7 +204,7 @@ public class LeaderRoutine implements Runnable {
      * create a new Accept object.
      * @return new Accept object.
      */
-    public Accept createNewAccept(){
+    public Accept createNewAccept() {
         DNSEntry modifiedValue = this.currentRound.findPromiseMaxIDValue();
         if (!modifiedValue.hasAccepted()) {
             //use current proposal value without modifying it
