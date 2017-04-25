@@ -21,7 +21,7 @@ public class Round {
     private HashMap<Integer, Acknlg> AcknlgMap;
     private boolean rejAck;
     /** record the rej's minproposal ID */
-    private HashSet<Integer> rejAcknlgSet;
+    private HashSet<ProposalID> rejAcknlgSet;
     private int logId;
     public Round(int nid, int rid, int logId) {
         this.nodeID = nid;
@@ -31,7 +31,7 @@ public class Round {
         this.acceptCount = 0;
         this.AcknlgMap = new HashMap<Integer, Acknlg>();
         this.rejAck = false;
-        this.rejAcknlgSet = new HashSet<Integer>();
+        this.rejAcknlgSet = new HashSet<ProposalID>();
         this.logId = logId;
     }
     public int getLogId() {
@@ -81,7 +81,7 @@ public class Round {
     public HashMap<Integer, Acknlg> getAcknlgMap() {
         return this.AcknlgMap;
     }  
-    public HashSet<Integer> getRejAcknlgSet() {
+    public HashSet<ProposalID> getRejAcknlgSet() {
         return this.rejAcknlgSet;
     }
     
@@ -110,10 +110,10 @@ public class Round {
     }
     /**
      * Add reject's minproposal value to RejAcknlgSet.
-     * @param minProposal
+     * @param proposalID
      */
-    public void addRejAcknlgSet(int minProposal) {
-        this.rejAcknlgSet.add(minProposal);
+    public void addRejAcknlgSet(ProposalID proposalID) {
+        this.rejAcknlgSet.add(proposalID);
     }
     /**
      * increment the promise count
@@ -135,9 +135,10 @@ public class Round {
     	/* promiseMap: <Integer, Promise> 
     	 * In the accepted promise in the promiseMap, find the source node id with the maximum accpetedId.
     	 */
-    	int maxsrc = -1, maxAcceptedId = -1;
+    	int maxsrc = -1;
+    	ProposalID maxAcceptedId = new ProposalID();
     	for (Promise p: this.promiseMap.values()) {
-    		if (p.getacceptedValue().hasAccepted() && p.getAcceptedId() > maxAcceptedId) {
+    		if (p.getacceptedValue().hasAccepted() && p.getAcceptedId().Compare(maxAcceptedId) > 0) {
     			maxAcceptedId = p.getAcceptedId();
     			maxsrc = p.getSrc();
     		}
@@ -155,11 +156,11 @@ public class Round {
      * If any rejects, find the largest minproposal ID in those rejects.
      * @return 
      */
-    public int findRejMaxMinproposalID() {
+    public ProposalID findRejMaxMinproposalID() {
         if (this.rejAcknlgSet.size() < 1) {
-            return -1;
+            return new ProposalID();
         }
-        Integer maxMinproposal = Collections.max(this.rejAcknlgSet);
+        ProposalID maxMinproposal = Collections.max(this.rejAcknlgSet);
         System.out.println("[Round Class] [findRejMaxMinproposalID] minproposal ID is: " +
                 maxMinproposal);
         return maxMinproposal;

@@ -9,7 +9,6 @@ public class Accept implements Serializable {
 	/* Which log slot should the <dns entry> written to */
 	private int logId;
 	/* The proposal Id in leader's accept proposal */
-//    private int proposalId;
 	private ProposalID proposalId;
     /* The DNS Entry in leader's accept proposal */
     private DNSEntry dnsentry;

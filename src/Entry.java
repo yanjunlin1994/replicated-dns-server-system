@@ -39,10 +39,8 @@ public class Entry implements Serializable {
 		try {
 			oos = new ObjectOutputStream(baos);
 			oos.writeInt(logId);
-//			oos.writeInt(minProposalId);
-//			oos.writeInt(acceptedProposalId);
 			oos.writeObject(minProposalId);
-//			oos.writeObject(acceptedProposalId);
+			oos.writeObject(acceptedProposalId);
 			oos.write(dnsEntry.toByte());
 			oos.flush();
 			baos.flush();
@@ -65,8 +63,6 @@ public class Entry implements Serializable {
 		logId = ois.readInt();
 		minProposalId = (ProposalID) ois.readObject();
 		acceptedProposalId = (ProposalID) ois.readObject();
-//		minProposalId = ois.readInt();
-//		acceptedProposalId = ois.readInt();
 		byte[] array = new byte[DNSENTRY_SIZE];
 		int entrylen = ois.read(array);
 		if (entrylen < DNSENTRY_SIZE) {

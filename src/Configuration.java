@@ -15,7 +15,7 @@ import java.util.List;
 public class Configuration {
     private HashMap<Integer,Node> nodeMap;
     private HashMap<Integer,ListenerIntf> ListenerIntfMap;
-    private String dnsFile;
+//    private String dnsFile;
     /**
      * Configuration constructor.
      * Construct nodeMap based on configuration file.
@@ -40,26 +40,26 @@ public class Configuration {
                                     (int)node.get("port"));
             this.nodeMap.put((int)node.get("id"),newNode); //put node in nodemap   
         }
-        this.updateProposalNumSet();
+//        this.updateProposalNumSet();
         //------------- log file -----------
-        dnsFile = (String) data.get("dnsFile");
+//        dnsFile = (String) data.get("dnsFile");
 //        System.out.println("[Configuration] dns target path: " + dnsFile);
        
     } 
     /**
      * Update the proposal number set of each node
      */
-    public void updateProposalNumSet() {
-        int base  = 0;
-        int proposalNum = 20;
-        for (Node nd : this.nodeMap.values()) {
-           for (int i = 0; i < proposalNum; i++) {
-               nd.addProposalNum(base + nd.getNodeID());
-               base += 10;
-           }
-           base = 0;
-        }
-    }
+//    public void updateProposalNumSet() {
+//        int base  = 0;
+//        int proposalNum = 20;
+//        for (Node nd : this.nodeMap.values()) {
+//           for (int i = 0; i < proposalNum; i++) {
+//               nd.addProposalNum(base + nd.getNodeID());
+//               base += 10;
+//           }
+//           base = 0;
+//        }
+//    }
     /**
      * Update the configuration file to include the listener for all other nodes. 
      * @param myID
@@ -102,7 +102,7 @@ public class Configuration {
     public HashMap<Integer, Node> getNodeMap() {
         return this.nodeMap;
     }
-    public String getDNSFile() {
-    	return this.dnsFile;
-    }
+//    public String getDNSFile() {
+//    	return this.dnsFile;
+//    }
 }

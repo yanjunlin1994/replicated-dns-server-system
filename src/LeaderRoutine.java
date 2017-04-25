@@ -1,35 +1,39 @@
+import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 public class LeaderRoutine implements Runnable {
+	
+	private static final int SUCCEED = 0;
+	private static final int FAIL = -1;
+	private static final int NEW_ROUND = -1;
+	private static final int FINISH_ROUND = 0;
+
     private int myID;
     private Configuration myConfig;
     private Leader currentLeader;
     private int majority;
     private Round currentRound;
-//    private int RoundID;
     private Proposal interRoundProposal; //temp proposal between reject and start a new round.
 //    private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
 //    private BlockingQueue<InterThreadMessage> LeaderMpCommQueue;
     private int logId;
     private Node me;
-    private boolean skip;
+    private boolean skipPrepare;
+    /* Include the node Id of the nodes which has no more accepted value beyond current log id */
+    private HashSet<Integer> noMoreAcceptedValueSet;
     public LeaderRoutine(int id, Configuration myConfig, Leader currentL, BlockingQueue<InterThreadMessage> i, BlockingQueue<InterThreadMessage> m) {
         this.myID = id;
         this.myConfig = myConfig;   
         this.currentLeader = currentL;
-<<<<<<< HEAD
-        this.majority = (myConfig.getNodeMap().size() / 2) + 1;
-//        this.RoundID = 0;
-=======
         this.majority = (myConfig.getListenerIntfMap().size() / 2) + 1;
-        this.RoundID = 0;
->>>>>>> 66dd8c385342025d8fbe97b6d183f36b50a902b8
+        System.out.println("[majority] "+majority);
         this.interRoundProposal = null;
 //        this.LeaderListenerCommQueue = i;
 //        this.LeaderMpCommQueue = m;
         this.me = myConfig.getNodeMap().get(myID);
-        this.skip = false;
+        /* Initially, skip is set to false and noMoreAcceptedSet is empty */
+        this.skipPrepare = false;
+        noMoreAcceptedValueSet = new HashSet<Integer>();
     }
-    @SuppressWarnings("resource")
     @Override
     public void run(){
         System.out.println("[LeaderRoutine Routine starts]");
@@ -55,30 +59,26 @@ public class LeaderRoutine implements Runnable {
      */
     public synchronized void ReceiveNewProposal() throws Exception {
         System.out.println("[LeaderRoutine] new round");
-        /* TODO why poll the proposal out? */
-        Proposal np = this.currentLeader.pollProposal(); 
-        int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
-        np.setProposalId(newProposalNum);  
-        /* find an appropriate log id for the new proposal */
-//        this.logId = me.getDnsfile().getMinUnchosenLogId();
-        np.setLogId(logId);
-        
-        int result = -1;
+        Proposal np = this.currentLeader.pollProposal();
+        /* The dnsfile.proposalId is set propoerly right now. Use it to set proposal id */
+        np.setProposalId(me.getDnsfile().getProposalId());
+        /* The dnsfile.minUnchosenLogId is set propoerly right now. Use it to set logId */
+        np.setLogId(me.getDnsfile().getMinUnchosenLogId());
+        int result = NEW_ROUND;
         /* Before sending the proposal, initialize the transaction information in it */
-        while (result != 0) {
-        	/* while having rejects.
-        	 * If this proposal is from last round, it should update its proposal id and keep the same log id.
-        	 * If it is a new proposal from client, start with smallest proposal id and choose the least unchosen id in the log.
-        	 */
-            if (this.interRoundProposal != null) {
-            	System.out.println("Continue with last proposal");
-                np = this.interRoundProposal;
-            }
-            DNSFile dnsfile = me.getDnsfile();
-            /* leader write its proposal into the log */
-            dnsfile.writeEntry(new Entry(np.getLogId(), np.getProposalId(), np.getProposalId(), np.getDnsentry()));
-            System.out.println("[leader] write new proposal into log");
-            result = this.NewRoundHandler(np);
+        while (result == NEW_ROUND) {
+        	/* while having rejects, it cannot skip prepare stage. why????
+          	 * If this proposal is from last round, it should update its proposal id and keep the same log id.
+          	 * If it is a new proposal from client, start with smallest proposal id and choose the least unchosen id in the log.
+          	 */
+        	if (this.interRoundProposal != null) {
+              	System.out.println("Continue with the previous proposal");
+                  np = this.interRoundProposal;
+              }
+              /* leader write its proposal into the log */
+              me.getDnsfile().writeEntry(new Entry(np.getLogId(), np.getProposalId(), np.getProposalId(), np.getDnsentry()));
+              System.out.println("[leader] write new proposal into log");
+              result = this.NewRoundHandler(np);
         }
     }
     /**
@@ -87,37 +87,39 @@ public class LeaderRoutine implements Runnable {
      * @throws Exception 
      */
     public int NewRoundHandler(Proposal p) throws Exception {
-//        System.out.println("[LeaderRoutine] [NewRoundHandler]");
-    	/* TODO the proposal id of the second proposal is not correct. It starts with 10. Actually it should start with 0.*/
+//       System.out.println("[LeaderRoutine] [NewRoundHandler]");
+    	/* TODO write the copy Proposal(p) function */
         Proposal np = new Proposal(p);//copy the proposal argument
-        int prepareSucceed = -1; //-1: fail; 0:succeed
-        /* If the leader receives noMoreAccepts from majority, it can skip prepare stage */
-        if (skip) {
-        	
-        }
-        /* keep trying new proposal number until prepare succeed */
-//        while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {     
-//            this.SetNewRoundParam(np);
-//            this.interRoundProposal = null; //clear the interRound proposal
-//            /* start prepare phase */
-//            if (this.prepare(np) != -1) {
-//                prepareSucceed = 0;
-//                break;
-//            }
-//        }
-        if (prepareSucceed == -1) {
-            throw new Exception("[LeaderRoutine] [NewRoundHandler] [prepare error] proposalNumSet exhausted");
+        currentRound = new Round(me.getNodeID(), me.getDnsfile().getProposalId().getRoundId(), p.getLogId());
+        /* If the leader receives noMoreAccepts from majority, it can skip prepare stage 
+         * Otherwise, it should continue with prepare stage.
+         */
+        if (!skipPrepare) {
+        	while (true) {
+        		System.out.println("[NewRoundHandler proposal id]" + np.getProposalId());
+        		this.SetNewRoundParam(np);
+        		/* TODO why clear the interRound here? */
+        		this.interRoundProposal = null; //clear the interRound proposal
+        		/* start prepare phase */
+        		if (this.prepare(np) == SUCCEED) {
+        			break;
+        		}
+        		/* If the prepare phase doesn't succeed, restart a new prepare phase,
+        		 * keep trying new proposalId until succeed */
+        		this.me.getDnsfile().incrementProposalId();
+        		np.setProposalId(this.me.getDnsfile().getProposalId());
+        	}
         }
         /* continue with accept phase */
-        if (this.accept() == -1) {  
-            if (this.RejectHandler() == -1) {
+        if (this.accept() == FAIL) {
+            if (this.RejectHandler() == FAIL) {
                 throw new Exception("[LeaderRoutine] [NewRoundHandler] [reject handle ERROR]");
             }
-            return -1;
+            return NEW_ROUND;
         } else {
         	/* successfully commit */
             this.commit();
-        	return 0;
+        	return FINISH_ROUND;
         }
     }
     //------------------- New Round Parameters -----------------------
@@ -126,7 +128,7 @@ public class LeaderRoutine implements Runnable {
      * @param np
      */
     public void SetNewRoundParam(Proposal np) {
-        this.currentRound = new Round(myID, (np.getProposalId() / 10), logId);
+        this.currentRound = new Round(myID, (np.getProposalId().getRoundId() / 10), logId);
         this.currentRound.setCurrentProposal(np);    
         System.out.println("[LeaderRoutine] [SetNewRound] log: "+this.currentRound.getLogId() + " proposalid: " + np.getProposalId() + "-> " + np);
     }
@@ -141,11 +143,16 @@ public class LeaderRoutine implements Runnable {
         for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
             ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
             try {
+            	System.out.println("[call " + noid + "]");
             	/* Leader receive the promise from slaves */
                 Promise aPromise = lisnode.LeaderPrepareProposal(p);
                 this.currentRound.addPromiseMap(aPromise);// add to promise map
                 System.out.println("[LeaderRoutine] [prepare] Recived: " + aPromise);
                 if (aPromise.getIsIfrealPromise()) {
+                	/* If one node sends noMoreAccpetedValue, add the node into noMoreAcceptedValueSet */
+                    if (aPromise.getNoMoreAcceptedValue()) {
+                    	noMoreAcceptedValueSet.add(aPromise.getSrc());
+                    }
                     this.currentRound.increPromiseCount();
                 }
             } catch (Exception e) {
@@ -154,31 +161,34 @@ public class LeaderRoutine implements Runnable {
                 continue;//continue to other listeners
             }
         } //end receiving promises
-        
         if (this.currentRound.getPromiseCount() + 1 >= this.majority) {//including promise from leader itself
             System.out.println("[LeaderRoutine] [prepare] prepare Majority Achieved!");
-            return 0;
+            /* If majority sends noMoreAcceptedValue, the proposer can skip prepare in next round */
+            if (noMoreAcceptedValueSet.size() >= this.majority) {
+            	skipPrepare = true;
+            }
+            return SUCCEED;
         } else {
             System.out.println("[LeaderRoutine] [prepare] prepare not reach majority, try next proposal proposal ID");   
-            return -1;
+            return FAIL;
         }
     }
     //------------------- Accept -------------------------
     public int accept() {
         Accept acpt = this.createNewAccept();
         this.BroadCastAccept(acpt);
-        if (!this.currentRound.getRejAck()) {
-            //If no reject, return success
-            return 0;
+        if (this.currentRound.getRejAck()) {
+            return FAIL;
         } else {
-            return -1;      
+        	//If no reject, return success
+            return SUCCEED;      
         }   
     }
     /**
      * create a new Accept object.
      * @return new Accept object.
      */
-    public Accept createNewAccept(){   
+    public Accept createNewAccept(){
         DNSEntry modifiedValue = this.currentRound.findPromiseMaxIDValue();
         if (!modifiedValue.hasAccepted()) {
             //use current proposal value without modifying it
@@ -204,6 +214,9 @@ public class LeaderRoutine implements Runnable {
                 if (ack.getisIfrealAcknlg()) {
                     this.currentRound.increAcceptCount();
                 } else {
+                	/* If one node rejects the accept proposal, set skipPrepare to false and remove the node from noMoreAcceptedValueSet */
+                	skipPrepare = false;
+                	noMoreAcceptedValueSet.remove(new Integer(ack.getSrc()));
                 	this.currentRound.setRejAck();
                 	this.currentRound.addRejAcknlgSet(ack.getMinProposal()); //add rej's minproposal to the RejAcknlgSet
                 }
@@ -221,48 +234,38 @@ public class LeaderRoutine implements Runnable {
      * and origin accpet value.
      */
     public int RejectHandler() {
-        int newProposalID;
+        ProposalID newProposalID;
         try {
             newProposalID = this.findNewProposalIDLargerThanRej();
-            if (newProposalID == -1) {
-                System.err.println("[LeaderRoutine] [RejectHandler] proposalNumSet exhausted");
-                return -1;
-            }
             /* TODO when is getAcceptProposal() update? */
             Proposal np = new Proposal(me.getDnsfile().getMinUnchosenLogId(), newProposalID, this.currentRound.getAcceptProposal().getValue());
             this.interRoundProposal = np;
-            return 0;
+            return SUCCEED;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return -1;              
+        return FAIL;              
     }
     /**
      * Find the New proposa ID that is larger than the rejects' max minproposal ID.
      * @throws Exception 
      */
-    public int findNewProposalIDLargerThanRej() throws Exception {
-        int RejMaxMinProposalID = this.currentRound.findRejMaxMinproposalID();
-        if (RejMaxMinProposalID == -1) {
+    public ProposalID findNewProposalIDLargerThanRej() throws Exception {
+        ProposalID RejMaxMinProposalID = this.currentRound.findRejMaxMinproposalID();
+        if (RejMaxMinProposalID.isNone()) {
             throw new Exception("[LeaderRoutine] [findNewProposalIDLargerThanRej]ERROR: no existing rejects");
         }
-        int newProposalID = -1;
-        while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {
-            int newProposalNumTemp = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
-            if (newProposalNumTemp > RejMaxMinProposalID) {
-                newProposalID = newProposalNumTemp;
-                return newProposalID;
-            }
+        /* Get a proposalId that is larger than the max rejProposalID */
+        while (this.me.getDnsfile().getProposalId().Compare(RejMaxMinProposalID) <= 0) {
+        	this.me.getDnsfile().getProposalId().incrementProposalId();
         }
-        return newProposalID;
+        return this.me.getDnsfile().getProposalId();
     }
   //------------------- Commit -------------------------
     public void commit() {
         System.out.println("[LeaderRoutine] [commit]");
         /* the proposed value is chosen */
-        //TODO: write value make it a function
     	DNSFile dnsfile = me.getDnsfile();
-    	/* TODO write minUnchosenLogId into disk */
     	dnsfile.incrementMinUnchosenLogId(logId);
     	Entry entry = dnsfile.readEntry(logId);
     	entry.setChosen();
