@@ -12,7 +12,7 @@ public class AcceptorRoutine implements Runnable {
     private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
     private BlockingQueue<InterThreadMessage> AcceptorMpCommQueue;
     private final int longestHeartBeatInterval = 10_000;
-    private final int largestLeaderFailureCount = 8;
+    private final int MaxLeaderFailureCount = 8;
     
     public AcceptorRoutine(int id, Configuration myConfig, BlockingQueue<InterThreadMessage> al, BlockingQueue<InterThreadMessage> am) {
         this.myID = id;
@@ -31,7 +31,7 @@ public class AcceptorRoutine implements Runnable {
                 this.increLeaderFailCount();
                 /* If there are multiple failures */
                 System.out.println("[Acceptor Routine] Leader fails for " + this.leaderFailCount + " times"); 
-                if (this.leaderFailCount > this.largestLeaderFailureCount) {
+                if (this.leaderFailCount > this.MaxLeaderFailureCount) {
                     System.out.println("[Acceptor Routine] Leader failure maximum achieved, go to LeaderFailure handler"); 
                     /* If there are too many timeouts between communication between leader and acceptor,
                      *  the acceptor will try to elect a new leader */
