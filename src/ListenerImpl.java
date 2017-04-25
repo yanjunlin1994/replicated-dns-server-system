@@ -16,6 +16,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     private Leader currentLeader;
     private AcceptorContent myAcceptorContent;//TODO: should be stored in disk for crash recovery
                                                //together with round number
+    private ElectionContent electionContent;
     /**
      * Constructor
      * @param config
@@ -23,7 +24,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      * @throws IOException 
      */
     protected ListenerImpl(Configuration config, Node m, Leader cl, BlockingQueue<InterThreadMessage> ai,
-                             BlockingQueue<InterThreadMessage> li) throws IOException {
+                             BlockingQueue<InterThreadMessage> li, ElectionContent ec) throws IOException {
         super(0);
         this.myConfig = config;
         this.me = m;
@@ -31,6 +32,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         this.LeaderListenerCommQueue = li;
         this.currentLeader = cl;
         this.myAcceptorContent = new AcceptorContent(this.me.getNodeID());
+        this.electionContent = ec;
     }
     /**
      * When slave receives a hello message from master, it will print out the hello message, as well
@@ -129,16 +131,45 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         Entry entry = dnsfile.readEntry(a.getLogId());
         Acknlg ack = null;
         if (a.getProposalID() >= entry.getMinProposalId()) {
-        	entry.setAcceptedProposalId(a.getProposalID());
-        	entry.setMinProposalId(a.getProposalID());
-        	entry.setdnsEntry(a.getValue());
-        	dnsfile.writeEntry(entry);
-        	ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), true);
-        	System.out.println("[Recieve LeaderAcceptProposal ACK! ] " + ack + ", "+entry);
+            entry.setAcceptedProposalId(a.getProposalID());
+            entry.setMinProposalId(a.getProposalID());
+            entry.setdnsEntry(a.getValue());
+            dnsfile.writeEntry(entry);
+            ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), true);
+            System.out.println("[Recieve LeaderAcceptProposal ACK! ] " + ack + ", "+entry);
         } else {
-        	ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), false);
-        	System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack);
+            ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), false);
+            System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack);
         }
         return ack;
     }
+    //------------------------------Leader election----------------------
+    @Override
+    public boolean ElectLeaderRequest(int proid) throws RemoteException {
+        System.out.println("[Recieve ElectLeaderRequest] " + proid);
+        if ((this.currentLeader.getStatus() == -1) && (this.electionContent.getStatus() == 0) &&
+                (this.electionContent.getBiggestCandidate() <= proid)) {
+            return true;
+        }
+        return false;
+    }
+    @Override
+    public synchronized boolean ElectLeaderConfirm(int proid) throws RemoteException {
+        System.out.println("[Recieve ElectLeaderConfirm] " + proid);
+        if ((this.currentLeader.getStatus() == -1) && (this.electionContent.getStatus() == 0) &&
+                (this.electionContent.getBiggestCandidate() <= proid)) {
+            this.electionContent.setBiggestCandidate(proid);
+            return true;
+        }
+        return false;
+    }
+    @Override
+    public synchronized void ElectLeaderVictory(int proid) throws RemoteException {
+        System.out.println("[Recieve ElectLeaderVictory] " + proid);
+        this.currentLeader.setStatus(1);
+        this.currentLeader.setID(proid);
+        this.electionContent.setStatus(1);
+        this.electionContent.setBiggestCandidate(-1); //clear the candidate
+    }
+    
 }
