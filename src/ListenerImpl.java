@@ -110,11 +110,9 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         Promise pro = null;
         /* If the acceptor has accepted the value, return it to the proposer */
         if (entry.getdns().hasAccepted()) {
-//        	pro = new Promise(this.me.getNodeID(), entry.getAcceptedProposalId(), entry.getdns(), realPromise);
         	System.out.println("[acceptor received prepare, already accepted] ");
         } else { 
         	/* set accptedProposal as -1 and acceptedValue as null if the node hasn't accepted any proposal */
-//        	pro = new Promise(this.me.getNodeID(), -1, new Entry(p.getLogId()).getdns(), realPromise);
         	System.out.println("[acceptor received prepare, haven't accepted] ");
         }
         pro = new Promise(this.me.getNodeID(), entry.getAcceptedProposalId(), entry.getdns(), realPromise);

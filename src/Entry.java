@@ -8,8 +8,10 @@ import java.io.Serializable;
 public class Entry implements Serializable {
 	private static final long serialVersionUID = 3433680946993754863L;
 	private int logId;
-	private int minProposalId;
-	private int acceptedProposalId;
+//	private int minProposalId;
+//	private int acceptedProposalId;
+	private ProposalID minProposalId;
+	private ProposalID acceptedProposalId;
 	private DNSEntry dnsEntry;
 	private static final int DNSENTRY_SIZE = new DNSEntry().toByte().length;
 	/**
@@ -17,11 +19,11 @@ public class Entry implements Serializable {
 	 */
 	protected Entry(int logId) {
 		this.logId = logId;
-		minProposalId = -1;
-		acceptedProposalId = -1;
+		minProposalId = new ProposalID();
+		acceptedProposalId = new ProposalID();
 		dnsEntry = new DNSEntry();
 	}
-	public Entry(int logId, int minProposalId, int acceptedId, DNSEntry dnsentry) {
+	public Entry(int logId, ProposalID minProposalId, ProposalID acceptedId, DNSEntry dnsentry) {
 		this.logId = logId;
 		this.minProposalId = minProposalId;
 		this.acceptedProposalId = acceptedId;
@@ -37,8 +39,10 @@ public class Entry implements Serializable {
 		try {
 			oos = new ObjectOutputStream(baos);
 			oos.writeInt(logId);
-			oos.writeInt(minProposalId);
-			oos.writeInt(acceptedProposalId);
+//			oos.writeInt(minProposalId);
+//			oos.writeInt(acceptedProposalId);
+			oos.writeObject(minProposalId);
+//			oos.writeObject(acceptedProposalId);
 			oos.write(dnsEntry.toByte());
 			oos.flush();
 			baos.flush();
@@ -59,8 +63,10 @@ public class Entry implements Serializable {
 		ByteArrayInputStream bais = new ByteArrayInputStream(byteArray);
 		ObjectInputStream ois = new ObjectInputStream(bais);
 		logId = ois.readInt();
-		minProposalId = ois.readInt();
-		acceptedProposalId = ois.readInt();
+		minProposalId = (ProposalID) ois.readObject();
+		acceptedProposalId = (ProposalID) ois.readObject();
+//		minProposalId = ois.readInt();
+//		acceptedProposalId = ois.readInt();
 		byte[] array = new byte[DNSENTRY_SIZE];
 		int entrylen = ois.read(array);
 		if (entrylen < DNSENTRY_SIZE) {
@@ -71,7 +77,8 @@ public class Entry implements Serializable {
 	}
 	/* If acceptedProposalId equals to MAX_VALUE, the corresponding value is chosen */
 	protected boolean isChosen() {
-		if (acceptedProposalId == Integer.MAX_VALUE) {
+//		if (acceptedProposalId == Integer.MAX_VALUE) {
+		if (acceptedProposalId.getRoundId() == Integer.MAX_VALUE) {
 			return true;
 		} else {
 			return false;
@@ -79,7 +86,8 @@ public class Entry implements Serializable {
 	}
 	/* Set acceptedProposalId to MAX_VALUE */
 	protected void setChosen() {
-		acceptedProposalId = Integer.MAX_VALUE;
+//		acceptedProposalId = Integer.MAX_VALUE;
+		acceptedProposalId.setRoundId(Integer.MAX_VALUE);
 	}
 	public int getLogId() {
 		return logId;
@@ -87,16 +95,16 @@ public class Entry implements Serializable {
 	public void setLogId(int logId) {
 		this.logId = logId;
 	}
-	public int getMinProposalId() {
+	public ProposalID getMinProposalId() {
 		return minProposalId;
 	}
-	public void setMinProposalId(int minProposalId) {
+	public void setMinProposalId(ProposalID minProposalId) {
 		this.minProposalId = minProposalId;
 	}
-	public int getAcceptedProposalId() {
+	public ProposalID getAcceptedProposalId() {
 		return acceptedProposalId;
 	}
-	public void setAcceptedProposalId(int acceptedProposalId) {
+	public void setAcceptedProposalId(ProposalID acceptedProposalId) {
 		this.acceptedProposalId = acceptedProposalId;
 	}
 	public DNSEntry getdns() {

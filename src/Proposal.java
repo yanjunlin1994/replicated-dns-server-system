@@ -1,10 +1,11 @@
 import java.io.Serializable;
 
 public class Proposal implements Serializable {
+	private static final long serialVersionUID = -5177705769992894644L;
 	private int logId;
-    private int proposalId;
+	private ProposalID proposalId;
     private DNSEntry dnsentry;
-    public Proposal(int logId, int proposalId, DNSEntry dnsentry) {
+    public Proposal(int logId, ProposalID proposalId, DNSEntry dnsentry) {
     	this.logId = logId;
     	this.proposalId = proposalId;
     	this.dnsentry = new DNSEntry();
@@ -26,10 +27,10 @@ public class Proposal implements Serializable {
 	public void setLogId(int logId) {
 		this.logId = logId;
 	}
-	public int getProposalId() {
+	public ProposalID getProposalId() {
 		return proposalId;
 	}
-	public void setProposalId(int proposalId) {
+	public void setProposalId(ProposalID proposalId) {
 		this.proposalId = proposalId;
 	}
 	public DNSEntry getDnsentry() {

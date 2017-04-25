@@ -5,22 +5,24 @@ public class LeaderRoutine implements Runnable {
     private Leader currentLeader;
     private int majority;
     private Round currentRound;
-    private int RoundID;
+//    private int RoundID;
     private Proposal interRoundProposal; //temp proposal between reject and start a new round.
-    private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
-    private BlockingQueue<InterThreadMessage> LeaderMpCommQueue;
+//    private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
+//    private BlockingQueue<InterThreadMessage> LeaderMpCommQueue;
     private int logId;
     private Node me;
+    private boolean skip;
     public LeaderRoutine(int id, Configuration myConfig, Leader currentL, BlockingQueue<InterThreadMessage> i, BlockingQueue<InterThreadMessage> m) {
         this.myID = id;
         this.myConfig = myConfig;   
         this.currentLeader = currentL;
         this.majority = (myConfig.getNodeMap().size() / 2) + 1;
-        this.RoundID = 0;
+//        this.RoundID = 0;
         this.interRoundProposal = null;
-        this.LeaderListenerCommQueue = i;
-        this.LeaderMpCommQueue = m;
+//        this.LeaderListenerCommQueue = i;
+//        this.LeaderMpCommQueue = m;
         this.me = myConfig.getNodeMap().get(myID);
+        this.skip = false;
     }
     @SuppressWarnings("resource")
     @Override
@@ -53,7 +55,7 @@ public class LeaderRoutine implements Runnable {
         int newProposalNum = this.myConfig.getNodeMap().get(this.myID).pollProposalNum();
         np.setProposalId(newProposalNum);  
         /* find an appropriate log id for the new proposal */
-        this.logId = me.getDnsfile().getMinUnchosenLogId();
+//        this.logId = me.getDnsfile().getMinUnchosenLogId();
         np.setLogId(logId);
         
         int result = -1;
@@ -84,16 +86,20 @@ public class LeaderRoutine implements Runnable {
     	/* TODO the proposal id of the second proposal is not correct. It starts with 10. Actually it should start with 0.*/
         Proposal np = new Proposal(p);//copy the proposal argument
         int prepareSucceed = -1; //-1: fail; 0:succeed
-        /* keep trying new proposal number until prepare succeed */
-        while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {     
-            this.SetNewRoundParam(np);
-            this.interRoundProposal = null; //clear the interRound proposal
-            /* start prepare phase */
-            if (this.prepare(np) != -1) {
-                prepareSucceed = 0;
-                break;
-            }
+        /* If the leader receives noMoreAccepts from majority, it can skip prepare stage */
+        if (skip) {
+        	
         }
+        /* keep trying new proposal number until prepare succeed */
+//        while (this.myConfig.getNodeMap().get(this.myID).proposalNumSetSize() > 0) {     
+//            this.SetNewRoundParam(np);
+//            this.interRoundProposal = null; //clear the interRound proposal
+//            /* start prepare phase */
+//            if (this.prepare(np) != -1) {
+//                prepareSucceed = 0;
+//                break;
+//            }
+//        }
         if (prepareSucceed == -1) {
             throw new Exception("[LeaderRoutine] [NewRoundHandler] [prepare error] proposalNumSet exhausted");
         }

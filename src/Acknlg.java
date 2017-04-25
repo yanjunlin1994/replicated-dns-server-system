@@ -1,10 +1,12 @@
 import java.io.Serializable;
 
 public class Acknlg implements Serializable {
-    private int src;
-    private int minProposal; //min proposal id
+	private static final long serialVersionUID = -4725913617202844833L;
+	private int src;
+//    private int minProposal; //min proposal id
+    private ProposalID minProposal;
     private boolean ifrealAcknlg; //could send the nack back as a type of promise
-    public Acknlg(int s, int mp, boolean real) {
+    public Acknlg(int s, ProposalID mp, boolean real) {
         this.src = s;
         this.minProposal = mp;
         this.ifrealAcknlg = real;
@@ -20,10 +22,10 @@ public class Acknlg implements Serializable {
     public void setSrc(int src) {
         this.src = src;
     }
-    public int getMinProposal() {
+    public ProposalID getMinProposal() {
         return minProposal;
     }
-    public void setMinProposal(int minProposal) {
+    public void setMinProposal(ProposalID minProposal) {
         this.minProposal = minProposal;
     }
     public boolean getisIfrealAcknlg() {

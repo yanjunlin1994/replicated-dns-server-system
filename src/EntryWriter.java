@@ -9,35 +9,65 @@ public class EntryWriter {
 	private File file;
 	/* Number of bytes when Entry object is serialized */
 	private static final int ENTRY_SIZE = new Entry(0).toByte().length;
+	private static final int PROPOSALID_SIZE = new ProposalID().toByte().length;
 	private static final int INT_BYTE_SIZE = 4;
 	private static final String FIRSTLINE = "log id, minProposalId, acceptedProposalId, dns:ip" + System.getProperty("line.separator");
 	private RandomAccessFile raf;
 	/* headcount is the length of the first line */
-	private int headcount = FIRSTLINE.length() + System.getProperty("line.separator").length() + INT_BYTE_SIZE;
+	private int headcount = FIRSTLINE.length() + System.getProperty("line.separator").length() + INT_BYTE_SIZE + PROPOSALID_SIZE;
 	public EntryWriter(String filename) throws IOException {
 		file = new File(filename);
 		if (!file.exists()) {
 			file.createNewFile();
 			raf = new RandomAccessFile(file, "rw");
+			/* the first line */
 			raf.writeBytes(FIRSTLINE);
-			raf.writeInt(-1);
-			raf.writeBytes(System.getProperty("line.seperator"));
+			/* the default unchosenLogId */
+			raf.writeInt(0);
+			/* the proposalId */
+			raf.write(new ProposalID().toByte());
+			raf.writeBytes(System.getProperty("line.separator"));
 			raf.close();
+		}
+	}
+	public ProposalID readProposalId() {
+		try {
+			raf = new RandomAccessFile(file, "rw");
+			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE);
+			byte[] byteArray = new byte[PROPOSALID_SIZE];
+			raf.read(byteArray);
+			raf.close();
+			return new ProposalID(byteArray);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return new ProposalID();
+	}
+	public void writeProposalId(ProposalID proposalId) {
+		try {
+			raf = new RandomAccessFile(file, "rw");
+			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE);
+			raf.write(proposalId.toByte());
+			raf.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	public void writeMinUnchosenLogId(int id) {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 			raf.seek(FIRSTLINE.length());
-			int minUnchosenLogId = raf.readInt();
+			raf.writeInt(id);;
 			raf.close();
-			return minUnchosenLogId;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return -1;
 	}
 	public int readMinUnchosenLogId() {
 		try {
@@ -66,7 +96,6 @@ public class EntryWriter {
 		try {
 			byte[] byteArray = new byte[ENTRY_SIZE];
 			int target = headcount + logId * ENTRY_SIZE;
-//			System.out.println("2: target "+target+" filelength:"+file.length());
 			raf.seek(target);
 			int filelength = (int) file.length();
 			if (target >= filelength) {

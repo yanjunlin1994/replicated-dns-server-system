@@ -5,7 +5,7 @@ public class DNSFile {
 	private String dnsfile;
 	private EntryWriter er;
 	private int minUnchosenLogId;
-	
+	private ProposalID proposalId;
 	public DNSFile(String node) {
 		dnsfile = node+LOGFILE;
 		try {
@@ -13,7 +13,38 @@ public class DNSFile {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		minUnchosenLogId = 0;
+		minUnchosenLogId = er.readMinUnchosenLogId();
+		proposalId = er.readProposalId();
+	}
+	/* -------------- operations about proposalId ------------- */
+	public ProposalID getProposalId() {
+		return proposalId;
+	}
+	public void setProposalId(ProposalID id) {
+		this.proposalId = id;
+		er.writeProposalId(proposalId);
+	}
+	/* -------------- operations about minUnchosenLogId ------------ */
+	public void setMinUnchosenLogId(int id) {
+		this.minUnchosenLogId = id;
+		er.writeMinUnchosenLogId(id);
+	}
+	public int getMinUnchosenLogId() {
+		System.out.println("[get MinUnchosenLogId] " + minUnchosenLogId);
+		return minUnchosenLogId;
+	}
+	/**
+	 * update minUnchosenLogId.
+	 */
+	public void incrementMinUnchosenLogId(int logId) {
+		if (minUnchosenLogId == logId) {
+			minUnchosenLogId += 1;
+			while(readEntry(minUnchosenLogId).isChosen()) {
+				minUnchosenLogId += 1;
+			}
+		}
+		er.writeMinUnchosenLogId(minUnchosenLogId);
+		System.out.println("[update MinUnchosenLogId] " + minUnchosenLogId);
 	}
 	/**
 	 * write an empty Entry of id 'logId'
@@ -32,21 +63,5 @@ public class DNSFile {
 	public Entry readEntry(int logId) {
 		Entry entry = er.read(logId);
 		return entry;
-	}
-	public void setMinUnchosenLogId(int id) {
-		this.minUnchosenLogId = id;
-	}
-	public int getMinUnchosenLogId() {
-		System.out.println("[get MinUnchosenLogId] " + minUnchosenLogId);
-		return minUnchosenLogId;
-	}
-	public void incrementMinUnchosenLogId(int logId) {
-		if (minUnchosenLogId == logId) {
-			minUnchosenLogId += 1;
-			while(readEntry(minUnchosenLogId).isChosen()) {
-				minUnchosenLogId += 1;
-			}
-		}
-		System.out.println("[update MinUnchosenLogId] " + minUnchosenLogId);
 	}
 }
