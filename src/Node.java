@@ -21,12 +21,9 @@ public class Node {
         this.port = prt;
         this.isActive = true;
 //        this.proposalNumSet = new LinkedBlockingQueue<Integer>();
-<<<<<<< HEAD
         this.dnsfile = new DNSFile(id);
-//        this.proposalIdMapToUnchosenLogId = new HashMap<ProposalID, LinkedList<Integer>>();
-=======
+        this.proposalIdMapToUnchosenLogId = new HashMap<ProposalID, List<Integer>>();
         this.dnsfile = null;
->>>>>>> 5566391a9fefa270a213a0ad62120c79bced4214
     }
     public DNSFile getDnsfile() {
 		return dnsfile;
