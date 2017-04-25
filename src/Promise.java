@@ -5,20 +5,25 @@ import java.io.Serializable;
  */
 public class Promise implements Serializable {
     private static final long serialVersionUID = -2120051092929991471L;
-    private int acceptedId;
+    private ProposalID acceptedId;
 	private DNSEntry acceptedValue;
     private int src;
     private boolean ifrealPromise;//could send the nack back as a type of promise
-    public Promise(int src, int acceptedId, DNSEntry acceptedValue, boolean realPromise) {
+    private boolean noMoreAcceptedValue;
+    public Promise(int src, ProposalID acceptedId, DNSEntry acceptedValue, boolean realPromise, boolean noMoreAcceptedValue) {
     	this.src = src;
     	this.acceptedId = acceptedId;
     	this.acceptedValue = acceptedValue;
     	this.ifrealPromise = realPromise;
+    	this.noMoreAcceptedValue = noMoreAcceptedValue;
     }
-    public int getAcceptedId() {
+    public boolean getNoMoreAcceptedValue() {
+    	return noMoreAcceptedValue;
+    }
+    public ProposalID getAcceptedId() {
 		return acceptedId;
 	}
-	public void setAcceptedId(int acceptedId) {
+	public void setAcceptedId(ProposalID acceptedId) {
 		this.acceptedId = acceptedId;
 	}
 	public DNSEntry getacceptedValue() {

@@ -6,19 +6,39 @@ public class DNSFile {
 	private EntryWriter er;
 	private int minUnchosenLogId;
 	private ProposalID proposalId;
-	public DNSFile(String node) {
-		dnsfile = node+LOGFILE;
+	/* The node doesn't accept any value in the log entries beyong noMoreAcceptedLogId */
+	private int noMoreAcceptedLogId;
+	public DNSFile(int node) {
+		dnsfile = String.valueOf(node)+LOGFILE;
 		try {
-			er = new EntryWriter(dnsfile);
+			er = new EntryWriter(dnsfile, node);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		minUnchosenLogId = er.readMinUnchosenLogId();
 		proposalId = er.readProposalId();
+		noMoreAcceptedLogId = er.readNoMoreAcceptedLogId();
+	}
+	/* -------------- operations about noMoreAcceptedLogId ---------*/
+	public int getNoMoreAcceptedLogId() {
+		return noMoreAcceptedLogId;
+	}
+	/** If the node accepts a value in a log entry that is beyond current noMoreAcceptedLogId,
+	 * update the value of noMoreAcceptedLogId.
+	 */
+	public void updateNoMoreAcceptedLogId(int log) {
+		if (log >= noMoreAcceptedLogId) {
+			noMoreAcceptedLogId = log + 1;
+		}
+		er.writeNoMoreAcceptedLogId(noMoreAcceptedLogId);
 	}
 	/* -------------- operations about proposalId ------------- */
 	public ProposalID getProposalId() {
 		return proposalId;
+	}
+	public void incrementProposalId() {
+		proposalId.incrementProposalId();
+		er.writeProposalId(proposalId);
 	}
 	public void setProposalId(ProposalID id) {
 		this.proposalId = id;

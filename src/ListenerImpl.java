@@ -1,12 +1,7 @@
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
-import java.rmi.registry.*;
 import java.io.IOException;
-import java.rmi.Naming;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.HashMap;
 public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
 	private static final long serialVersionUID = -1227249378955929227L;
 	private Configuration myConfig;
@@ -14,8 +9,6 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
     private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
     private Leader currentLeader;
-    private AcceptorContent myAcceptorContent;//TODO: should be stored in disk for crash recovery
-                                               //together with round number
     private ElectionContent electionContent;
     /**
      * Constructor
@@ -31,7 +24,6 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         this.AcceptorListenerCommQueue = ai;
         this.LeaderListenerCommQueue = li;
         this.currentLeader = cl;
-        this.myAcceptorContent = new AcceptorContent(this.me.getNodeID());
         this.electionContent = ec;
     }
     /**
@@ -72,7 +64,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         	/* Once receiving a new request, leader adds the request into the processQueue. */
             response = "[ I am leader, I can handle this request]"; 
             /* generate a proposal and add it into leader's request queue */
-            Proposal np = new Proposal(-1, -1, dnsentry);
+            Proposal np = new Proposal(-1, new ProposalID(), dnsentry);
             this.currentLeader.addNewProposal(np);
         } else {
             if (this.currentLeader.getID() == -1) {
@@ -99,7 +91,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         /* get the entry for current log id. If the slave does not have an entry, return an empty entry */
         Entry entry = dnsfile.readEntry(p.getLogId());
         boolean realPromise = false;
-        if (p.getProposalId() > entry.getMinProposalId()) {
+        if (p.getProposalId().Compare(entry.getMinProposalId()) > 0) {
         	/* update the minProposalId in log file */
         	entry.setMinProposalId(p.getProposalId());
         	realPromise = true;
@@ -117,7 +109,9 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         	/* set accptedProposal as -1 and acceptedValue as null if the node hasn't accepted any proposal */
         	System.out.println("[acceptor received prepare, haven't accepted] ");
         }
-        pro = new Promise(this.me.getNodeID(), entry.getAcceptedProposalId(), entry.getdns(), realPromise);
+        /* If the proposal's log entry is larger than node's noMoreAcceptedLogId, then noMoreAcceptedValue is set to true */
+        boolean noMoreAcceptedValue = (me.getDnsfile().getNoMoreAcceptedLogId() <= p.getLogId());
+        pro = new Promise(this.me.getNodeID(), entry.getAcceptedProposalId(), entry.getdns(), realPromise, noMoreAcceptedValue);
         return pro;
     }
     /**
@@ -130,7 +124,11 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         DNSFile dnsfile = me.getDnsfile();
         Entry entry = dnsfile.readEntry(a.getLogId());
         Acknlg ack = null;
-        if (a.getProposalID() >= entry.getMinProposalId()) {
+        /* If the proposer's proposerId is larger than acceptor's minProposal */
+        if (a.getProposalID().Compare(entry.getMinProposalId()) >= 0) {
+        	/* If an acceptor accepts a value, check if its noMoreAcceptedLogId needs to be updated */
+        	dnsfile.updateNoMoreAcceptedLogId(a.getLogId());
+        	/* set acceptor's acceptedId, acceptedValue, and minProposalId */
             entry.setAcceptedProposalId(a.getProposalID());
             entry.setMinProposalId(a.getProposalID());
             entry.setdnsEntry(a.getValue());

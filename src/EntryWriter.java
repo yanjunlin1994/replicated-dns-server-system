@@ -11,23 +11,56 @@ public class EntryWriter {
 	private static final int ENTRY_SIZE = new Entry(0).toByte().length;
 	private static final int PROPOSALID_SIZE = new ProposalID().toByte().length;
 	private static final int INT_BYTE_SIZE = 4;
-	private static final String FIRSTLINE = "log id, minProposalId, acceptedProposalId, dns:ip" + System.getProperty("line.separator");
+	private static final String FIRSTLINE = "minUnchosenLogId/proposalId/unAcceptedLogId  log id/minProposalId/acceptedProposalId/dns:ip" + System.getProperty("line.separator");
 	private RandomAccessFile raf;
-	/* headcount is the length of the first line */
-	private int headcount = FIRSTLINE.length() + System.getProperty("line.separator").length() + INT_BYTE_SIZE + PROPOSALID_SIZE;
-	public EntryWriter(String filename) throws IOException {
+	/* headcount is the length of meta data in file's head */
+	private int headcount = FIRSTLINE.length() + System.getProperty("line.separator").length() + INT_BYTE_SIZE*2 + PROPOSALID_SIZE;
+	public EntryWriter(String filename, int node) throws IOException {
 		file = new File(filename);
 		if (!file.exists()) {
 			file.createNewFile();
 			raf = new RandomAccessFile(file, "rw");
 			/* the first line */
 			raf.writeBytes(FIRSTLINE);
-			/* the default unchosenLogId */
+			/* the unchosenLogId, default value: 0 */
 			raf.writeInt(0);
-			/* the proposalId */
-			raf.write(new ProposalID().toByte());
+			/* the proposalId, default value: 0.nodeId */
+			raf.write(new ProposalID(node).toByte());
+			/* the unAcceptedLogId. Initially the log is empty, and it doesn't accept anything */
+			raf.writeInt(0);
 			raf.writeBytes(System.getProperty("line.separator"));
 			raf.close();
+		}
+	}
+	/**
+	 * Read the value of noMoreAcceptedLogId from the log.
+	 */
+	public int readNoMoreAcceptedLogId() {
+		try {
+			raf = new RandomAccessFile(file, "rw");
+			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE + PROPOSALID_SIZE);
+			int noMoreAcceptedLogId = raf.readInt();
+			return noMoreAcceptedLogId;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return Integer.MAX_VALUE;
+	}
+	/**
+	 * Write the noMoreAcceptedLogId to log.
+	 */
+	public void writeNoMoreAcceptedLogId(int id) {
+		try {
+			raf = new RandomAccessFile(file, "rw");
+			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE + PROPOSALID_SIZE);
+			raf.writeInt(id);
+			raf.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	public ProposalID readProposalId() {
