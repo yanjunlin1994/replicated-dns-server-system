@@ -12,7 +12,7 @@ public class Promise implements Serializable {
     private boolean noMoreAcceptedValue;
     public Promise(int src, ProposalID acceptedId, DNSEntry acceptedValue, boolean realPromise, boolean noMoreAcceptedValue) {
     	this.src = src;
-    	this.acceptedId = acceptedId;
+    	this.acceptedId = new ProposalID(acceptedId);
     	this.acceptedValue = acceptedValue;
     	this.ifrealPromise = realPromise;
     	this.noMoreAcceptedValue = noMoreAcceptedValue;
@@ -24,7 +24,7 @@ public class Promise implements Serializable {
 		return acceptedId;
 	}
 	public void setAcceptedId(ProposalID acceptedId) {
-		this.acceptedId = acceptedId;
+		this.acceptedId = new ProposalID(acceptedId);
 	}
 	public DNSEntry getacceptedValue() {
 		return acceptedValue;
@@ -42,7 +42,7 @@ public class Promise implements Serializable {
 
     public Promise(Promise p) {
         this.src = p.getSrc();
-        this.acceptedId = p.getAcceptedId();
+        this.acceptedId = new ProposalID(p.getAcceptedId());
         this.acceptedValue = new DNSEntry();
         this.acceptedValue.setIp(p.getacceptedValue().getIp());
         this.acceptedValue.setDns(p.getacceptedValue().getDns());

@@ -63,10 +63,10 @@ public class LeaderRoutine implements Runnable {
         Proposal np = this.currentLeader.pollProposal();
         /* The dnsfile.proposalId is set propoerly right now. Use it to set proposal id */
         np.setProposalId(me.getDnsfile().getProposalId());
-        proposalId = np.getProposalId();
+        this.proposalId = np.getProposalId();
         /* The dnsfile.minUnchosenLogId is set propoerly right now. Use it to set logId */
         np.setLogId(me.getDnsfile().getMinUnchosenLogId());
-        logId = np.getLogId();
+        this.logId = np.getLogId();
         int result = NEW_ROUND;
         /* Before sending the proposal, initialize the transaction information in it */
         while (result == NEW_ROUND) {
@@ -93,6 +93,7 @@ public class LeaderRoutine implements Runnable {
 //       System.out.println("[LeaderRoutine] [NewRoundHandler]");
     	/* TODO write the copy Proposal(p) function */
         Proposal np = new Proposal(p);//copy the proposal argument
+        this.interRoundProposal = null; //clear the interRound proposal
         currentRound = new Round(me.getNodeID(), me.getDnsfile().getProposalId().getRoundId(), p.getLogId());
         /* If the leader receives noMoreAccepts from majority, it can skip prepare stage 
          * Otherwise, it should continue with prepare stage.
@@ -101,8 +102,7 @@ public class LeaderRoutine implements Runnable {
         	while (true) {
         		System.out.println("[NewRoundHandler proposal id]" + np.getProposalId());
         		this.SetNewRoundParam(np);
-        		/* TODO why clear the interRound here? */
-        		this.interRoundProposal = null; //clear the interRound proposal
+        		
         		/* start prepare phase */
         		if (this.prepare(np) == SUCCEED) {
         			break;
@@ -133,7 +133,6 @@ public class LeaderRoutine implements Runnable {
      * @param np
      */
     public void SetNewRoundParam(Proposal np) {
-    	/* TODO why do we need roundId in Round() */
         this.currentRound = new Round(myID, np.getProposalId().getRoundId(), logId);
         this.currentRound.setCurrentProposal(np);    
         System.out.println("[LeaderRoutine] [SetNewRound] log: "+this.currentRound.getLogId() + " proposalid: " + np.getProposalId() + "-> " + np);
