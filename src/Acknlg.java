@@ -8,12 +8,12 @@ public class Acknlg implements Serializable {
     private boolean ifrealAcknlg; //could send the nack back as a type of promise
     public Acknlg(int s, ProposalID mp, boolean real) {
         this.src = s;
-        this.minProposal = mp;
+        this.minProposal = new ProposalID(mp);
         this.ifrealAcknlg = real;
     }
     public Acknlg(Acknlg a) {
         this.src = a.getSrc();
-        this.minProposal = a.getMinProposal();
+        this.minProposal = new ProposalID(a.getMinProposal());
         this.ifrealAcknlg = a.getisIfrealAcknlg();
     }
     public int getSrc() {
@@ -26,7 +26,7 @@ public class Acknlg implements Serializable {
         return minProposal;
     }
     public void setMinProposal(ProposalID minProposal) {
-        this.minProposal = minProposal;
+        this.minProposal = new ProposalID(minProposal);
     }
     public boolean getisIfrealAcknlg() {
         return ifrealAcknlg;

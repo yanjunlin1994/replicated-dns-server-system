@@ -19,9 +19,9 @@ public class Entry implements Serializable {
 	 */
 	protected Entry(int logId) {
 		this.logId = logId;
-		minProposalId = new ProposalID();
-		acceptedProposalId = new ProposalID();
-		dnsEntry = new DNSEntry();
+		this.minProposalId = new ProposalID();
+		this.acceptedProposalId = new ProposalID();
+		this.dnsEntry = new DNSEntry();
 	}
 	public Entry(int logId, ProposalID minProposalId, ProposalID acceptedId, DNSEntry dnsentry) {
 		this.logId = logId;
@@ -101,7 +101,7 @@ public class Entry implements Serializable {
 		return acceptedProposalId;
 	}
 	public void setAcceptedProposalId(ProposalID acceptedProposalId) {
-		this.acceptedProposalId = acceptedProposalId;
+		this.acceptedProposalId = new ProposalID(acceptedProposalId);
 	}
 	public DNSEntry getdns() {
 		return dnsEntry;

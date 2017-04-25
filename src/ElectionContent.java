@@ -1,4 +1,7 @@
-
+/**
+ * Content about the election
+ *
+ */
 public class ElectionContent {
     private int status;
     private int biggestCandidate;
