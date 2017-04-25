@@ -25,9 +25,9 @@ public class EntryWriter {
 			/* the unchosenLogId, default value: 0 */
 			raf.writeInt(0);
 			/* the proposalId, default value: 0.nodeId */
-			raf.write(new ProposalID(node).toByte());
-			/* the unAcceptedLogId. Initially the log is empty, and it doesn't accept anything */
-			raf.writeInt(0);
+            raf.write(new ProposalID(node).toByte());
+            /* the unAcceptedLogId. Initially the log is empty, and it doesn't accept anything */
+            raf.writeInt(0);
 			raf.writeBytes(System.getProperty("line.separator"));
 			raf.close();
 		}
