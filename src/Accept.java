@@ -14,7 +14,7 @@ public class Accept implements Serializable {
     private DNSEntry dnsentry;
     public Accept(int logId, ProposalID proposalId, DNSEntry dnsentry) {
     	this.logId = logId;
-    	this.proposalId = proposalId;
+    	this.proposalId = new ProposalID(proposalId);
     	this.dnsentry = dnsentry;
     }
     public int getLogId() {

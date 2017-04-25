@@ -132,7 +132,8 @@ public class LeaderRoutine implements Runnable {
      * @param np
      */
     public void SetNewRoundParam(Proposal np) {
-        this.currentRound = new Round(myID, (np.getProposalId().getRoundId() / 10), logId);
+    	/* TODO why do we need roundId in Round() */
+        this.currentRound = new Round(myID, np.getProposalId().getRoundId(), logId);
         this.currentRound.setCurrentProposal(np);    
         System.out.println("[LeaderRoutine] [SetNewRound] log: "+this.currentRound.getLogId() + " proposalid: " + np.getProposalId() + "-> " + np);
     }
