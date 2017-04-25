@@ -5,6 +5,7 @@ public class ProposalID implements Serializable, Comparable {
 	private static final long serialVersionUID = 1141384734335772126L;
 	private int roundId;
 	private int nodeId;
+	/* TODO: when to use an empty proposal? */
 	public ProposalID() {
 		this.roundId = -1;
 		this.nodeId = -1;
@@ -67,7 +68,7 @@ public class ProposalID implements Serializable, Comparable {
 		return this.compareTo(pi);
 	}
 	public boolean isNone() {
-		if (roundId == 1 && nodeId == 1) {
+		if (roundId == -1 && nodeId == -1) {
 			return true;
 		} else {
 			return false;
