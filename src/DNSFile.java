@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 
 public class DNSFile {
 	private static final String LOGFILE = ".dns";
@@ -8,6 +10,7 @@ public class DNSFile {
 	private ProposalID proposalId;
 	/* The node doesn't accept any value in the log entries beyong noMoreAcceptedLogId */
 	private int noMoreAcceptedLogId;
+	private HashMap<ProposalID, List<Integer>> proposalIdMapToUnchosenLogId;
 	public DNSFile(int node) {
 		dnsfile = String.valueOf(node)+LOGFILE;
 		try {
@@ -18,6 +21,7 @@ public class DNSFile {
 		minUnchosenLogId = er.readMinUnchosenLogId();
 		proposalId = er.readProposalId();
 		noMoreAcceptedLogId = er.readNoMoreAcceptedLogId();
+		this.proposalIdMapToUnchosenLogId = er.getProposalIdMapToUnchosenLogId();
 	}
 	/* -------------- operations about noMoreAcceptedLogId ---------*/
 	public int getNoMoreAcceptedLogId() {

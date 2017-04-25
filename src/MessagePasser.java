@@ -34,6 +34,7 @@ public class MessagePasser {
         this.myConfig = new Configuration(configuration_filename);         
         this.myID = ID;
         this.me = this.myConfig.getNodeMap().get(ID);  
+        /* set the dns file for current node */
         this.me.setDnsfile(new DNSFile(this.myID)); 
         this.currentLeader = new Leader();
         this.AcceptorListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();

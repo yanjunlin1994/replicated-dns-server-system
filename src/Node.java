@@ -14,21 +14,19 @@ public class Node {
 //    private Queue<Integer> proposalNumSet;
     /* Each node has its dns file, which stores the dns content and transaction information */
     private DNSFile dnsfile;
-    private HashMap<ProposalID, List<Integer>> proposalIdMapToUnchosenLogId;
     public Node(int id, String i, int prt) {
         this.nodeID = id;
         this.ip = i;
         this.port = prt;
         this.isActive = true;
 //        this.proposalNumSet = new LinkedBlockingQueue<Integer>();
-//        this.proposalIdMapToUnchosenLogId = new HashMap<ProposalID, LinkedList<Integer>>();
-        this.proposalIdMapToUnchosenLogId = new HashMap<ProposalID, List<Integer>>();
         this.dnsfile = null;
     }
+    
     public DNSFile getDnsfile() {
 		return dnsfile;
 	}
-    
+    /* It will only be used once when the nodes starts running */
 	public void setDnsfile(DNSFile dnsfile) {
         this.dnsfile = dnsfile;
     }
