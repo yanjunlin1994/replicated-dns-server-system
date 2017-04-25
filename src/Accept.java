@@ -19,11 +19,12 @@ public class Accept implements Serializable {
     	this.dnsentry = dnsentry;
     	this.firstUnchosenLogId = firstUnchosenLogId;
     }
-    public int getFirstUnchosenLogId() {
-    	return firstUnchosenLogId;
-    }
+    
     public int getLogId() {
     	return logId;
+    }
+    public void setLogId(int logId) {
+        this.logId = logId;
     }
 	public ProposalID getProposalID() {
 		return proposalId;
@@ -31,15 +32,21 @@ public class Accept implements Serializable {
 	public void setProposalId(ProposalID proposalId) {
 		this.proposalId = new ProposalID(proposalId);
 	}
-	public void setLogId(int logId) {
-        this.logId = logId;
-    }
+	
 	public DNSEntry getValue() {
 		return dnsentry;
 	}
 	public void setAcceptedValue(DNSEntry dnsentry) {
 		this.dnsentry = dnsentry;
 	}
+
+    public void setFirstUnchosenLogId(int firstUnchosenLogId) {
+        this.firstUnchosenLogId = firstUnchosenLogId;
+    }
+
+    public int getFirstUnchosenLogId() {
+        return firstUnchosenLogId;
+    }
     @Override
     public String toString() { 
         return "[Accept " + " ID." + this.proposalId + " " + this.dnsentry + "]";
