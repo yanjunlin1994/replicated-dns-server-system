@@ -15,7 +15,7 @@ public class LeaderRoutine implements Runnable {
         this.myID = id;
         this.myConfig = myConfig;   
         this.currentLeader = currentL;
-        this.majority = (myConfig.getNodeMap().size() / 2) + 1;
+        this.majority = (myConfig.getListenerIntfMap().size() / 2) + 1;
         this.RoundID = 0;
         this.interRoundProposal = null;
         this.LeaderListenerCommQueue = i;
@@ -127,7 +127,8 @@ public class LeaderRoutine implements Runnable {
      */
     public int prepare(Proposal p) {
         System.out.println("[LeaderRoutine] prepare");
-        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
+        for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
+            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
             try {
             	/* Leader receive the promise from slaves */
                 Promise aPromise = lisnode.LeaderPrepareProposal(p);
@@ -138,6 +139,7 @@ public class LeaderRoutine implements Runnable {
                 }
             } catch (Exception e) {
                 System.err.println("[Leader Routine] [Prepare] Someone loses connection");
+                this.myConfig.removeNode(noid);
                 continue;//continue to other listeners
             }
         } //end receiving promises
@@ -182,7 +184,8 @@ public class LeaderRoutine implements Runnable {
      * send Accept message to nodes after receiving majority promise
      */
     public void BroadCastAccept(Accept acp) {
-        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
+        for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
+            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
             try {
                 Acknlg ack = lisnode.LeaderAcceptProposal(acp);
                 this.currentRound.addAcknlgMap(ack);// add to ack map
@@ -194,7 +197,9 @@ public class LeaderRoutine implements Runnable {
                 	this.currentRound.addRejAcknlgSet(ack.getMinProposal()); //add rej's minproposal to the RejAcknlgSet
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("[Leader Routine] [BroadCastAccept] Someone loses connection");
+                this.myConfig.removeNode(noid);
+                continue;//continue to other listeners
             }
         }  
     }
@@ -240,7 +245,7 @@ public class LeaderRoutine implements Runnable {
         }
         return newProposalID;
     }
-    //------------------- Commit -------------------------
+  //------------------- Commit -------------------------
     public void commit() {
         System.out.println("[LeaderRoutine] [commit]");
         /* the proposed value is chosen */
