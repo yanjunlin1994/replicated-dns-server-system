@@ -31,9 +31,10 @@ public class MessagePasser {
      * @throws IOException 
      */
     public MessagePasser(String configuration_filename, int ID) throws IOException {
-        this.myConfig = new Configuration(configuration_filename);
+        this.myConfig = new Configuration(configuration_filename);         
         this.myID = ID;
         this.me = this.myConfig.getNodeMap().get(ID);  
+        this.me.setDnsfile(new DNSFile(this.myID)); 
         this.currentLeader = new Leader();
         this.AcceptorListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.LeaderListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
@@ -67,11 +68,12 @@ public class MessagePasser {
         this.LeaderElectionSection();
         TimeUnit.SECONDS.sleep(2);
         while (true) {   
-            result = this.LeaderAcceptorBranch();
+//            result = this.LeaderAcceptorBranch();
 //            if (result == 2) {
 //                System.out.println("[mp][run now] welcome back! Leader fails, So New Leader Election!");
 //                TimeUnit.SECONDS.sleep(10);
 //                this.currentLeader.setStatus(-1);
+//                this.currentLeader.setID(-1);          
 //                this.electionContent.setStatus(0);
 //                this.myConfig.removeNode(this.currentLeader.getID());
 //                this.runForElectionEntrance();
