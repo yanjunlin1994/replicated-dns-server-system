@@ -1,3 +1,5 @@
+import java.util.HashMap;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 /**
@@ -12,6 +14,7 @@ public class Node {
 //    private Queue<Integer> proposalNumSet;
     /* Each node has its dns file, which stores the dns content and transaction information */
     private DNSFile dnsfile;
+    private HashMap<ProposalID, List<Integer>> proposalIdMapToUnchosenLogId;
     public Node(int id, String i, int prt) {
         this.nodeID = id;
         this.ip = i;
@@ -19,6 +22,7 @@ public class Node {
         this.isActive = true;
 //        this.proposalNumSet = new LinkedBlockingQueue<Integer>();
         this.dnsfile = new DNSFile(id);
+//        this.proposalIdMapToUnchosenLogId = new HashMap<ProposalID, LinkedList<Integer>>();
     }
     public DNSFile getDnsfile() {
 		return dnsfile;

@@ -25,10 +25,6 @@ public class LeaderRoutine implements Runnable {
         this.myID = id;
         this.myConfig = myConfig;   
         this.currentLeader = currentL;
-//<<<<<<< HEAD
-//        this.majority = (myConfig.getNodeMap().size() / 2) + 1;
-////        this.RoundID = 0;
-//=======
         this.majority = (myConfig.getListenerIntfMap().size() / 2) + 1;
         System.out.println("[majority] "+majority);
         this.interRoundProposal = null;
@@ -190,7 +186,7 @@ public class LeaderRoutine implements Runnable {
     	if (!skipPrepare) {
     		acpt = this.createNewAccept();
     	} else {
-    		acpt = new Accept(this.currentRound.getLogId(), this.currentRound.getCurrentProposal().getProposalId(), this.currentRound.getCurrentProposal().getDnsentry());
+    		acpt = new Accept(this.currentRound.getLogId(), this.currentRound.getCurrentProposal().getProposalId(), this.currentRound.getCurrentProposal().getDnsentry(), this.me.getDnsfile().getMinUnchosenLogId());
     	}
         this.BroadCastAccept(acpt);
         if (this.currentRound.getRejAck()) {
@@ -212,7 +208,7 @@ public class LeaderRoutine implements Runnable {
             modifiedValue = this.currentRound.getCurrentProposal().getDnsentry();
         }
         System.out.println("[LeaderRoutine] [createNewAccept] accept value is: " + modifiedValue);
-        Accept accp = new Accept(this.currentRound.getLogId(), this.currentRound.getCurrentProposal().getProposalId(), modifiedValue);
+        Accept accp = new Accept(this.currentRound.getLogId(), this.currentRound.getCurrentProposal().getProposalId(), modifiedValue, this.me.getDnsfile().getMinUnchosenLogId());
         this.currentRound.setAcceptProposal(accp); //add to current round
         return accp;
     }
