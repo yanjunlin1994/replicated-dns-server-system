@@ -24,7 +24,7 @@ public class Accept implements Serializable {
 		return proposalId;
 	}
 	public void setProposalId(ProposalID proposalId) {
-		this.proposalId = proposalId;
+		this.proposalId = new ProposalID(proposalId);
 	}
 	public void setLogId(int logId) {
         this.logId = logId;

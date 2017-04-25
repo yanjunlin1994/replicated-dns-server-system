@@ -33,8 +33,8 @@ public class AcceptorRoutine implements Runnable {
                 System.out.println("[Acceptor Routine] Leader fails for " + this.leaderFailCount + " times"); 
                 if (this.leaderFailCount > this.largestLeaderFailureCount) {
                     System.out.println("[Acceptor Routine] Leader failure maximum achieved, go to LeaderFailure handler"); 
-                    /* If there are too many timeouts between communication between leader and slave,
-                     *  the slave will try to elect a new leader */
+                    /* If there are too many timeouts between communication between leader and acceptor,
+                     *  the acceptor will try to elect a new leader */
                     this.handleLeaderFailure();
                     return;//kill thread
                 }  
