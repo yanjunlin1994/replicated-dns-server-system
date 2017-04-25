@@ -18,12 +18,16 @@ public class Node {
         this.port = prt;
         this.isActive = true;
 //        this.proposalNumSet = new LinkedBlockingQueue<Integer>();
-        this.dnsfile = new DNSFile(id);
+        this.dnsfile = null;
     }
     public DNSFile getDnsfile() {
 		return dnsfile;
 	}
-	public int getNodeID() {
+    
+	public void setDnsfile(DNSFile dnsfile) {
+        this.dnsfile = dnsfile;
+    }
+    public int getNodeID() {
         return nodeID;
     }
 
