@@ -65,7 +65,7 @@ public class ProposalID implements Serializable, Comparable {
 	@Override
 	public int compareTo(Object o) {
 		ProposalID pi = (ProposalID) o;
-		return this.compareTo(pi);
+		return this.Compare(pi);
 	}
 	public boolean isNone() {
 		if (roundId == -1 && nodeId == -1) {
