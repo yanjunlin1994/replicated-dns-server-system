@@ -71,7 +71,6 @@ public class MessagePasser {
         while (true) {   
             result = this.LeaderAcceptorBranch();
             if (result == 2) {
-<<<<<<< HEAD
                 
                 System.out.println("[mp][run now] welcome back! Leader fails, So New Leader Election!");
                 TimeUnit.SECONDS.sleep(7);
@@ -85,19 +84,6 @@ public class MessagePasser {
                     this.broadcastVictory();
                 }   
                 this.electionContent.clear();
-=======
-                System.out.println("[mp][run now] welcome back! Leader fails, So New Leader Election!");
-                TimeUnit.SECONDS.sleep(10);
-                this.currentLeader.setStatus(-1);
-                this.currentLeader.setID(-1);          
-                this.electionContent.setStatus(0);
-                this.myConfig.removeNode(this.currentLeader.getID());
-                this.runForElectionEntrance();
-                TimeUnit.SECONDS.sleep(8);
-                if (this.electionContent.getBiggestCandidate() == this.myID) {
-                    this.broadcastVictory();
-                }
->>>>>>> 17644eb8cf72c569d38615c73b8407cc8b06540c
             }
         }
     }
@@ -183,17 +169,11 @@ public class MessagePasser {
     //------------------- entrance for running for leader
     public void runForElectionEntrance() {
         if (this.ProposeToBeLeader() != 1) {
-<<<<<<< HEAD
             System.out.println("[runForElectionEntrance] first stage return"); 
             return;
         }
         if (this.ConfirmToBeLeader() != 1) {
-            System.out.println("[runForElectionEntrance] second stage return"); 
-=======
-            return;
-        }
-        if (this.ConfirmToBeLeader() != 1) {
->>>>>>> 17644eb8cf72c569d38615c73b8407cc8b06540c
+            System.out.println("[runForElectionEntrance] second stage return");
             return;
         }
         
@@ -203,9 +183,7 @@ public class MessagePasser {
         // set the biggest candidate id to be my ID if myID is larger that candidate id
         if (this.electionContent.getBiggestCandidate() > this.myID) {
             return 0;
-        } else {
-            this.electionContent.setBiggestCandidate(this.myID);
-        }   
+        } 
         //set my proposal to other nodes to verify that the old leader can no longer be reached by a majority
         int agreeCount = 0;
         for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
@@ -218,7 +196,6 @@ public class MessagePasser {
                 }
             } catch (Exception e) {
                 System.err.println("[MP] [WantToBeLeader] Someone loses connection");
-<<<<<<< HEAD
 //                this.myConfig.removeNode(noid);
                 continue;//continue to other listeners
             }
@@ -228,23 +205,12 @@ public class MessagePasser {
         }
         if (agreeCount >= (this.getMajorityNumber())) {
             System.out.println("[MP] [WantToBeLeader] agreeCount: " + agreeCount);
-=======
-                this.myConfig.removeNode(noid);
-                continue;//continue to other listeners
-            }
-        }   
-        if (agreeCount >= this.getMajorityNumber()) {
->>>>>>> 17644eb8cf72c569d38615c73b8407cc8b06540c
            return 1;
         }
         return 0;
     }
     //------------------- Second stage of running for leader
-<<<<<<< HEAD
     public synchronized int ConfirmToBeLeader() {
-=======
-    public int ConfirmToBeLeader() {
->>>>>>> 17644eb8cf72c569d38615c73b8407cc8b06540c
         int agreeCount = 0;
         for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
             ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
@@ -256,7 +222,6 @@ public class MessagePasser {
                 }
             } catch (Exception e) {
                 System.err.println("[MP] [ConfirmToBeLeader] Someone loses connection");
-<<<<<<< HEAD
 //                this.myConfig.removeNode(noid);
                 continue;//continue to other listeners
             }
@@ -264,25 +229,14 @@ public class MessagePasser {
         if (this.electionContent.getBiggestCandidate() <= this.myID) {
             agreeCount++;
         }
-=======
-                this.myConfig.removeNode(noid);
-                continue;//continue to other listeners
-            }
-        }
-        
->>>>>>> 17644eb8cf72c569d38615c73b8407cc8b06540c
         if (agreeCount >= this.getMajorityNumber()) {
             this.electionContent.setBiggestCandidate(this.myID);
            return 1;
         }  
         return 0;
     }
-<<<<<<< HEAD
     public synchronized void broadcastVictory() {
         System.out.println("[MP] [broadcastVictory]");
-=======
-    public void broadcastVictory() {
->>>>>>> 17644eb8cf72c569d38615c73b8407cc8b06540c
         this.currentLeader.setStatus(1);
         this.currentLeader.setID(this.myID);
         this.electionContent.setStatus(1);
@@ -293,11 +247,7 @@ public class MessagePasser {
                 lisnode.ElectLeaderVictory(this.myID);
             } catch (Exception e) {
                 System.err.println("[MP] [ConfirmToBeLeader] Someone loses connection");
-<<<<<<< HEAD
 //                this.myConfig.removeNode(noid);
-=======
-                this.myConfig.removeNode(noid);
->>>>>>> 17644eb8cf72c569d38615c73b8407cc8b06540c
                 continue;//continue to other listeners
             }
         }

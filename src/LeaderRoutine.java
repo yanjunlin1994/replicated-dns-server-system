@@ -25,11 +25,8 @@ public class LeaderRoutine implements Runnable {
         this.myID = id;
         this.myConfig = myConfig;   
         this.currentLeader = currentL;
-        this.majority = (myConfig.getListenerIntfMap().size() / 2) + 1;
-<<<<<<< HEAD
+        this.majority = ((myConfig.getListenerIntfMap().size() / 2) + 1);
 //        System.out.println("[majority] "+majority);
-=======
->>>>>>> 17644eb8cf72c569d38615c73b8407cc8b06540c
         this.interRoundProposal = null;
 //        this.LeaderListenerCommQueue = i;
 //        this.LeaderMpCommQueue = m;
