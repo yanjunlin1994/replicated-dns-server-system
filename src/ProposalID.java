@@ -76,6 +76,14 @@ public class ProposalID implements Serializable, Comparable {
 	}
 	@Override
 	public String toString() {
-		return roundId + ":" + nodeId;
+		return roundId + "." + nodeId;
+	}
+	@Override
+	public boolean equals(Object o) {
+		return this.compareTo(o) == 0;
+	}
+	@Override
+	public int hashCode() {
+		return new Integer(roundId).hashCode() / 7 + new Integer(nodeId).hashCode() / 6 * 5;
 	}
 }

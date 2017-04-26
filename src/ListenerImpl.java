@@ -1,6 +1,9 @@
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
 	private static final long serialVersionUID = -1227249378955929227L;
@@ -124,6 +127,30 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         DNSFile dnsfile = me.getDnsfile();
         Entry entry = dnsfile.readEntry(a.getLogId());
         Acknlg ack = null;
+        /* Use proposer's proposerId, minUnchosedLogId to validate acceptor's log entry. 
+         * To validate an log entry, set the acceptedId to be INTEGER.MAX_VALUE and remove it from proposalIdToUnchosenLogId map.
+         */
+        HashMap<ProposalID, Set<Integer>> map = this.me.getDnsfile().getProposalIdMapToUnchosenLogId();
+        map.forEach((proposalId, set)-> {
+			set.forEach(logId -> {
+				System.out.print(proposalId+":"+logId+"\t");
+			});
+		});
+        if (map.containsKey(a.getProposalID())) {
+        	System.out.println("[contains key(a.getProposalID())]");
+	        for (Integer unchosenLog : map.get(a.getProposalID())) {
+	        	System.out.println("can " + a.getProposalID() + " validate " + unchosenLog +" ?");
+	        	if (unchosenLog < a.getFirstUnchosenLogId()) {
+	        		System.out.println("[LeaderAcceptProposal] validate log " + unchosenLog + " by proposer's proposal.");
+	        		/* set the entry to be chosen */
+	        		entry = this.me.getDnsfile().readEntry(unchosenLog);
+	        		entry.setChosen();
+	        		this.me.getDnsfile().writeEntry(entry);
+	        		/* remove the logId from proposalIdToUnchosenLogId map. */
+	        		this.me.getDnsfile().removeFromMap(a.getProposalID(), unchosenLog);
+	        	}
+	        }
+        }
         /* If the proposer's proposerId is larger than acceptor's minProposal */
         if (a.getProposalID().Compare(entry.getMinProposalId()) >= 0) {
         	/* If an acceptor accepts a value, check if its noMoreAcceptedLogId needs to be updated */
