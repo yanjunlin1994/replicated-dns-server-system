@@ -22,7 +22,7 @@ public class ElectionContent {
         this.biggestCandidate = biggestCandidate;
     }
     public void clear() {
-        System.out.println("[ElectionContent] [clear]"); 
+//        System.out.println("[ElectionContent] [clear]"); 
         this.status = -1;
         this.biggestCandidate = -1;
     }

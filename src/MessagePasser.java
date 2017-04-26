@@ -169,11 +169,11 @@ public class MessagePasser {
     //------------------- entrance for running for leader
     public void runForElectionEntrance() {
         if (this.ProposeToBeLeader() != 1) {
-            System.out.println("[runForElectionEntrance] first stage return"); 
+//            System.out.println("[runForElectionEntrance] first stage return"); 
             return;
         }
         if (this.ConfirmToBeLeader() != 1) {
-            System.out.println("[runForElectionEntrance] second stage return");
+//            System.out.println("[runForElectionEntrance] second stage return");
             return;
         }
         
@@ -253,7 +253,7 @@ public class MessagePasser {
         }
     }
     public int getMajorityNumber() {
-        System.out.println("[MP majority] " + ((this.myConfig.getNodeMap().size() / 2) + 1));
+//        System.out.println("[MP majority] " + ((this.myConfig.getNodeMap().size() / 2) + 1));
         return ((this.myConfig.getNodeMap().size() / 2) + 1);
     }
 }
