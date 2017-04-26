@@ -26,7 +26,7 @@ public class LeaderRoutine implements Runnable {
         this.myConfig = myConfig;   
         this.currentLeader = currentL;
         this.majority = (myConfig.getListenerIntfMap().size() / 2) + 1;
-        System.out.println("[majority] "+majority);
+//        System.out.println("[majority] "+majority);
         this.interRoundProposal = null;
 //        this.LeaderListenerCommQueue = i;
 //        this.LeaderMpCommQueue = m;
@@ -162,7 +162,7 @@ public class LeaderRoutine implements Runnable {
                 }
             } catch (Exception e) {
                 System.err.println("[Leader Routine] [Prepare] Someone loses connection");
-                this.myConfig.removeNode(noid);
+//                this.myConfig.removeNode(noid);
                 continue;//continue to other listeners
             }
         } //end receiving promises
@@ -233,7 +233,7 @@ public class LeaderRoutine implements Runnable {
                 }
             } catch (Exception e) {
                 System.err.println("[Leader Routine] [BroadCastAccept] Someone loses connection");
-                this.myConfig.removeNode(noid);
+//                this.myConfig.removeNode(noid);
                 continue;//continue to other listeners
             }
         }  

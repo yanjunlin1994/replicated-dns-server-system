@@ -21,6 +21,9 @@ public class ElectionContent {
     public void setBiggestCandidate(int biggestCandidate) {
         this.biggestCandidate = biggestCandidate;
     }
-    
+    public void clear() {
+        this.status = -1;
+        this.biggestCandidate = -1;
+    }
 
 }

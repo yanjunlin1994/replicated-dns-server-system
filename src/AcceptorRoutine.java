@@ -12,7 +12,7 @@ public class AcceptorRoutine implements Runnable {
     private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
     private BlockingQueue<InterThreadMessage> AcceptorMpCommQueue;
     private final int longestHeartBeatInterval = 10_000;
-    private final int MaxLeaderFailureCount = 8;
+    private final int MaxLeaderFailureCount = 6;
     
     public AcceptorRoutine(int id, Configuration myConfig, BlockingQueue<InterThreadMessage> al, BlockingQueue<InterThreadMessage> am) {
         this.myID = id;
