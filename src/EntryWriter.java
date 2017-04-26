@@ -3,8 +3,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 /**
  * EntryWriter class is used to read/write dnsFile entry by entry.
  */
@@ -35,8 +37,8 @@ public class EntryWriter {
 			raf.close();
 		}
 	}
-	public HashMap<ProposalID, List<Integer>> getProposalIdMapToUnchosenLogId() {
-		HashMap<ProposalID, List<Integer>> map = new HashMap<ProposalID, List<Integer>>();
+	public HashMap<ProposalID, Set<Integer>> getProposalIdMapToUnchosenLogId() {
+		HashMap<ProposalID, Set<Integer>> map = new HashMap<ProposalID, Set<Integer>>();
 		int noMoreAcceptedLogId = readNoMoreAcceptedLogId();
 		Entry entry = null;
 		for (int i = 0; i < noMoreAcceptedLogId; i++) {
@@ -44,7 +46,7 @@ public class EntryWriter {
 			/* If the log is not chosen but has been accepted, add its id in the hashmap */
 			if (!entry.isChosen() && entry.getdns().hasAccepted()) {
 				if (!map.containsKey(entry.getAcceptedProposalId())) {
-					map.put(entry.getAcceptedProposalId(), new LinkedList<Integer>());
+					map.put(entry.getAcceptedProposalId(), new HashSet<Integer>());
 				}
 				map.get(entry.getAcceptedProposalId()).add(entry.getLogId());
 			}
