@@ -30,7 +30,8 @@ public class LeaderHeartBeat implements Runnable {
             try {
                 lisnode.LeaderHeartBeat(hbmessage);  
             } catch (Exception e) {
-                System.err.println("[LeaderRoutine] [LeaderHeartBeat] Someone close the connection");
+//                System.err.println("[LeaderRoutine] [LeaderHeartBeat] Someone close the connection");
+                continue;
             }
         }
     }

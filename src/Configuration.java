@@ -91,10 +91,12 @@ public class Configuration {
         int nextID = (currentLeader + 1) % nodeMap.size();
         return this.nodeMap.get(nextID).getNodeID();   
     }
-    public void removeNode(int nodeID) {
-        Node rmN = this.nodeMap.get(nodeID);
-        rmN.setActive(false);
-        this.ListenerIntfMap.remove(nodeID);   
+    public void removeNode(int nodeID) throws Exception {
+        throw new Exception("removeNode");
+//        System.out.println("[removeNode :" + nodeID + "]");
+//        Node rmN = this.nodeMap.get(nodeID);
+//        rmN.setActive(false);
+//        this.ListenerIntfMap.remove(nodeID);   
     }
     public HashMap<Integer, ListenerIntf> getListenerIntfMap() {
         return this.ListenerIntfMap;
