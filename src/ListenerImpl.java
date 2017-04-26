@@ -161,6 +161,8 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
             entry.setdnsEntry(a.getValue());
             dnsfile.writeEntry(entry);
             ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), true);
+            /* add the unchosen log into proposalIdToUnchosenLogId map */
+            this.me.getDnsfile().addToMap(a.getProposalID(), a.getLogId());
             System.out.println("[Recieve LeaderAcceptProposal ACK! ] " + ack + ", "+entry);
         } else {
             ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), false);

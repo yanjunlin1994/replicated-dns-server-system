@@ -30,6 +30,12 @@ public class DNSFile {
 			});
 		}); 
 	}
+	public void addToMap(ProposalID proposalId, int logId) {
+		if (!proposalIdMapToUnchosenLogId.containsKey(proposalId)) {
+			proposalIdMapToUnchosenLogId.put(proposalId, new HashSet<Integer>());
+		}
+		proposalIdMapToUnchosenLogId.get(proposalId).add(logId);
+	}
 	/**
 	 *  Since already set the log of logId to chosen, remove it form the proposalIdMapToUnchosenLogId. 
 	 */

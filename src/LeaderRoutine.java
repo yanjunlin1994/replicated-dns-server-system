@@ -161,7 +161,7 @@ public class LeaderRoutine implements Runnable {
                 }
             } catch (Exception e) {
                 System.err.println("[Leader Routine] [Prepare] Someone loses connection");
-                this.myConfig.removeNode(noid);
+//                this.myConfig.removeNode(noid);
                 continue;//continue to other listeners
             }
         } //end receiving promises
@@ -232,7 +232,7 @@ public class LeaderRoutine implements Runnable {
                 }
             } catch (Exception e) {
                 System.err.println("[Leader Routine] [BroadCastAccept] Someone loses connection");
-                this.myConfig.removeNode(noid);
+//                this.myConfig.removeNode(noid);
                 continue;//continue to other listeners
             }
         }  
