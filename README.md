@@ -1,18 +1,6 @@
 # replicated-dns-server-system
-
-
-Main class
-
-right click export choose configuration finish
-
-java -jar DNSSystem.jar config.yaml 4
-
-
-4.1
-1. LeaderRoutine.java 91
-2. ListenerImpl.java 50
-3. ListenerImpl.java 42
-
+Hi! This is a implementation of replicated commit-log based on Multi-Paxos that serves for replicated DNS server system. With this system, we can ensure the highly consistent, fault-tolerant replicated commit-log. It is very applicable to repliacted status machine. Feel free to download it :D
+We are still developing the system and might have bugs in it. Please feel free to email us(yanjunl1@andrew.cmu.edu)
 
 
 
