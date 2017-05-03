@@ -15,7 +15,6 @@ import java.util.List;
 public class Configuration {
     private HashMap<Integer,Node> nodeMap;
     private HashMap<Integer,ListenerIntf> ListenerIntfMap;
-//    private String dnsFile;
     /**
      * Configuration constructor.
      * Construct nodeMap based on configuration file.
@@ -36,35 +35,19 @@ public class Configuration {
         //-------------nodes-----------
         List<HashMap<Integer, Object>> nodes = (List<HashMap<Integer, Object>> )data.get("configuration");
         for (HashMap<Integer, Object> node : nodes) {
+        	System.out.println("[config] node: " + node);
             Node newNode = new Node((int)node.get("id"), (String)node.get("ip"),
                                     (int)node.get("port"));
             this.nodeMap.put((int)node.get("id"),newNode); //put node in nodemap   
         }
-//        this.updateProposalNumSet(); 
-    } 
-    /**
-     * Update the proposal number set of each node
-     */
-//    public void updateProposalNumSet() {
-//        int base  = 0;
-//        int proposalNum = 20;
-//        for (Node nd : this.nodeMap.values()) {
-//           for (int i = 0; i < proposalNum; i++) {
-//               nd.addProposalNum(base + nd.getNodeID());
-//               base += 10;
-//           }
-//           base = 0;
-//        }
-//    }
+    }
     /**
      * Update the configuration file to include the listener for all other nodes. 
      * @param myID
      */
     public void updateListenerIntfMap(int myID) {
+    	/* Its own registration also need to be added in the nodeMap */
         for (Node nd : this.nodeMap.values()) {
-            if (nd.getNodeID() == myID) {
-                continue;
-            }
             String lookupName = "//localhost:" + nd.getPort() + "/Listener" + nd.getNodeID();
             try {
                 ListenerIntf NodeListener = (ListenerIntf) Naming.lookup(lookupName);
@@ -87,20 +70,10 @@ public class Configuration {
         int nextID = (currentLeader + 1) % nodeMap.size();
         return this.nodeMap.get(nextID).getNodeID();   
     }
-    public void removeNode(int nodeID) throws Exception {
-        throw new Exception("removeNode");
-//        System.out.println("[removeNode :" + nodeID + "]");
-//        Node rmN = this.nodeMap.get(nodeID);
-//        rmN.setActive(false);
-//        this.ListenerIntfMap.remove(nodeID);   
-    }
     public HashMap<Integer, ListenerIntf> getListenerIntfMap() {
         return this.ListenerIntfMap;
     }
     public HashMap<Integer, Node> getNodeMap() {
         return this.nodeMap;
     }
-//    public String getDNSFile() {
-//    	return this.dnsFile;
-//    }
 }

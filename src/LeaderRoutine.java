@@ -54,6 +54,7 @@ public class LeaderRoutine implements Runnable {
     public synchronized void ReceiveNewProposal() throws Exception {
     	/* Create a new proposal */
     	Proposal p = this.currentLeader.pollProposal();
+    	System.out.println("[LR.pollProposal] " + p);
         Proposal np = new Proposal(p);
         /* The dnsfile.proposalId is set propoerly right now. Use it to set proposal id */
         np.setDnsentry(p.getDnsentry());
@@ -250,6 +251,7 @@ public class LeaderRoutine implements Runnable {
     /**
      * Find the New proposa ID that is larger than the rejects' max minproposal ID.
      * @throws Exception 
+     * 
      */
     public ProposalID findNewProposalIDLargerThanRej() throws Exception {
         ProposalID RejMaxMinProposalID = this.currentRound.findRejMaxMinproposalID();
@@ -269,6 +271,7 @@ public class LeaderRoutine implements Runnable {
     	Entry entry = dnsfile.readEntry(this.currentRound.getLogId());
     	entry.setChosen();
     	System.out.println("[LR.commit]: " + entry);
+    	/* leader commits, WRITE the chosen entry into log */
     	dnsfile.writeEntry(entry);
     	dnsfile.incrementMinUnchosenLogId(this.currentRound.getLogId());
     }

@@ -42,9 +42,7 @@ public class MessagePasser {
         this.AcceptorMpCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.LeaderMpCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.electionContent = new ElectionContent();
-        /*
-         * Start RPC listener
-         */
+
         try {
             this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader,
                             this.AcceptorListenerCommQueue, this.LeaderListenerCommQueue, this.electionContent);
@@ -65,87 +63,34 @@ public class MessagePasser {
         TimeUnit.SECONDS.sleep(10); //wait for other DNS replicas join in
         this.myConfig.updateListenerIntfMap(this.myID);
         TimeUnit.SECONDS.sleep(8);
-        int result = -1;
         this.LeaderElectionSection();
         TimeUnit.SECONDS.sleep(2);
-        while (true) {   
-            result = this.LeaderAcceptorBranch();
-            if (result == 2) {
-                
-                System.out.println("[mp][run now] welcome back! Leader fails, So New Leader Election!");
-                TimeUnit.SECONDS.sleep(7);
-                this.currentLeader.setStatus(-1);         
-                this.electionContent.setStatus(0);
-                this.currentLeader.setID(-1);  
-                this.runForElectionEntrance();
-                TimeUnit.SECONDS.sleep(5);
-                if (this.electionContent.getBiggestCandidate() == this.myID) {
-                    this.broadcastVictory();
-                }   
-                this.electionContent.clear();
-            }
+        InterThreadMessage msg = null;
+        /* open acceptor routine */
+        new Thread(new AcceptorRoutine(this.myID, this.myConfig, this.AcceptorListenerCommQueue, this.AcceptorMpCommQueue)).start();
+        /* for leader, open leader routine */
+        if (currentLeader.getID() == myID) {
+        	new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader, this.LeaderListenerCommQueue, this.LeaderMpCommQueue)).start();
         }
-    }
-    /**
-     * Decide which branch the processor is going to.
-     * @return
-     */
-    public int LeaderAcceptorBranch() {
-        if (this.myID == this.currentLeader.getID()) {
-        	System.out.println("[LeaderAcceptorBranch] LeaderEntrance " + this.myID);
-            return this.LeaderEntrance(); 
-        }
-        else {
-        	System.out.println("[LeaderAcceptorBranch] AcceptorEntrance " + this.myID);
-            return this.AcceptorEntrance();
-        }
-    }
-    /**
-     * Open a new leader routine thread.
-     * @return
-     */
-    public int LeaderEntrance() {
-        Thread myleaderRoutine = new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader, this.LeaderListenerCommQueue, this.LeaderMpCommQueue));
-        myleaderRoutine.start();
-        return this.waitLeaderRoutine();
-    }
-    /**
-     * Open an acceptor thread routine.
-     * @return
-     */
-    public int AcceptorEntrance() {
-        Thread myAcceptorRoutine = new Thread(new AcceptorRoutine(this.myID, this.myConfig, this.AcceptorListenerCommQueue, this.AcceptorMpCommQueue));
-        myAcceptorRoutine.start();
-        return this.waitAcceptorRoutine();      
-    } 
-    public synchronized int waitLeaderRoutine() {
         while (true) {
-            if (this.LeaderMpCommQueue.size() > 0) {
-                InterThreadMessage newMessage = this.LeaderMpCommQueue.poll();
-                System.out.println("[mp][waitLeaderRoutine] receive message from leader routine " + newMessage); 
-                return 1;
-            }
-            /** sleep for efficiency */
-            try {
-                Thread.sleep(8000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    public synchronized int waitAcceptorRoutine() {
-        while (true) {
-            if (this.AcceptorMpCommQueue.size() > 0) {
-                InterThreadMessage newMessage = this.AcceptorMpCommQueue.poll();
-                System.out.println("[mp][waitAcceptorRoutine] receive message from acceptor routine " + newMessage); 
-                return 2;
-            }
-            /** sleep for efficiency */
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        	if (!AcceptorMpCommQueue.isEmpty()) {
+        		msg = AcceptorMpCommQueue.poll();
+        		if (msg.getKind().equals("leaderElection")) {
+        			System.out.println("[MP.run] Elect a new leader.");
+                    TimeUnit.SECONDS.sleep(7);
+                    this.currentLeader.setStatus(-1);         
+                    this.electionContent.setStatus(0);
+                    this.currentLeader.setID(-1);  
+                    this.runForElectionEntrance();
+                    TimeUnit.SECONDS.sleep(5);
+                    if (this.electionContent.getBiggestCandidate() == this.myID) {
+                        this.broadcastVictory();
+                        new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader, this.LeaderListenerCommQueue, this.LeaderMpCommQueue)).start();
+                    }   
+                    this.electionContent.clear();
+        		}
+        	}
+            Thread.sleep(5000);
         }
     }
     //--------------------------------------Election------------------------------------------

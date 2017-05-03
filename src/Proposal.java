@@ -11,6 +11,7 @@ public class Proposal implements Serializable {
     	this.dnsentry = new DNSEntry();
     	this.dnsentry.setDns(dnsentry.getDns());
     	this.dnsentry.setIp(dnsentry.getIp());
+    	this.dnsentry.setOperation(dnsentry.getOperation());
     }
     /**
      * Clone

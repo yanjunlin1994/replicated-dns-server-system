@@ -13,13 +13,12 @@ configuration :
 - id : 2
   ip   : 127.0.0.1
   port : 14255
-#- id : 3
-#  ip   : 127.0.0.1
-#  port : 12998
-#- id : 4
-#  ip   : 127.0.0.1
-#  port : 19871
-dnsFile : dnsEntry.txt 
+- id : 3
+  ip   : 127.0.0.1
+  port : 12998
+- id : 4
+  ip   : 127.0.0.1
+  port : 19871
 # This is the incoming port on which MP will listen
 # May be ephemeral for further communication as usual
 # sendRules :

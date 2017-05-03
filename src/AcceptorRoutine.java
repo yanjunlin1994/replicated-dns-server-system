@@ -25,14 +25,14 @@ public class AcceptorRoutine implements Runnable {
     @SuppressWarnings("resource")
     @Override
     public synchronized void run() {
-        System.out.println("[Acceptor Routine starts]");
+        System.out.println("[AR.run]");
         while (true) {
             if (this.checkHeartBeatExpire() != 0) {
                 this.increLeaderFailCount();
                 /* If there are multiple failures */
-                System.out.println("[Acceptor Routine] Leader fails for " + this.leaderFailCount + " times"); 
+                System.out.println("[AR] Leader fails for " + this.leaderFailCount + " times"); 
                 if (this.leaderFailCount > this.MaxLeaderFailureCount) {
-                    System.out.println("[Acceptor Routine] Leader failure maximum achieved, go to LeaderFailure handler"); 
+                    System.out.println("[AR] Leader failure maximum achieved"); 
                     /* If there are too many timeouts between communication between leader and acceptor,
                      *  the acceptor will try to elect a new leader */
                     this.handleLeaderFailure();
@@ -77,9 +77,9 @@ public class AcceptorRoutine implements Runnable {
      * @return
      */
     public int handleLeaderFailure() {
-        System.out.println("[Acceptor Routine] [handleLeaderFailure]"); 
+        System.out.println("[AR.handle failure]"); 
         InterThreadMessage lf= new InterThreadMessage(this.myID, this.myID, 
-                                   "LeaderFailure", "LeaderFailure", -1);
+                                   "leaderElection", "leaderElection", -1);
         /* Add a 'leader fail' message into the AcceptorMpCommQueue, to notify the messagePasser process */
         this.AcceptorMpCommQueue.add(lf);
         return 0;

@@ -8,8 +8,6 @@ import java.io.Serializable;
 public class Entry implements Serializable {
 	private static final long serialVersionUID = 3433680946993754863L;
 	private int logId;
-//	private int minProposalId;
-//	private int acceptedProposalId;
 	private ProposalID minProposalId;
 	private ProposalID acceptedProposalId;
 	private DNSEntry dnsEntry;
@@ -74,7 +72,6 @@ public class Entry implements Serializable {
 	}
 	/* If acceptedProposalId equals to MAX_VALUE, the corresponding value is chosen */
 	protected boolean isChosen() {
-//		if (acceptedProposalId == Integer.MAX_VALUE) {
 		if (acceptedProposalId.getRoundId() == Integer.MAX_VALUE) {
 			return true;
 		} else {
@@ -83,7 +80,6 @@ public class Entry implements Serializable {
 	}
 	/* Set acceptedProposalId to MAX_VALUE */
 	protected void setChosen() {
-//		acceptedProposalId = Integer.MAX_VALUE;
 		acceptedProposalId.setRoundId(Integer.MAX_VALUE);
 	}
 	public int getLogId() {
