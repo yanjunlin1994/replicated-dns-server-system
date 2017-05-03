@@ -4,8 +4,8 @@ import java.util.Arrays;
 
 public class DNSEntry implements Serializable {
 	private static final long serialVersionUID = -2456546379723602208L;
-	private static final int DNS_MAXLENGTH = 32;
-	private static final int IP_MAXLENGTH = 16;
+	public static final int DNS_MAXLENGTH = 60;
+	public static final int IP_MAXLENGTH = 32;
 	private byte[] dns;
 	private byte[] ip;
 	public DNSEntry() {

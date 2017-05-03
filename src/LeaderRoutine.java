@@ -102,7 +102,6 @@ public class LeaderRoutine implements Runnable {
         	while (true) {
         		System.out.println("[NewRoundHandler proposal id]" + np.getProposalId());
         		this.SetNewRoundParam(np);
-        		
         		/* start prepare phase */
         		if (this.prepare(np) == SUCCEED) {
         			break;
