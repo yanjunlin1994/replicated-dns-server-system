@@ -58,7 +58,6 @@ public class AcceptorRoutine implements Runnable {
      */
     public void processInterThreadMessage(InterThreadMessage newM) {
         if (newM.getKind().equals("HeartBeatMessage")) {
-//            System.out.println("[Acceptor Routine] [processInterThreadMessage] new Leader HeartBeat message");
             this.setLatestHeartbeat(System.currentTimeMillis()); 
         }
     }

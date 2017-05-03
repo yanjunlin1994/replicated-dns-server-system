@@ -8,6 +8,12 @@ public class DNSEntry implements Serializable {
 	public static final int IP_MAXLENGTH = 32;
 	private byte[] dns;
 	private byte[] ip;
+	public DNSEntry(DNSEntry entry) {
+		dns = new byte[DNS_MAXLENGTH];
+		System.arraycopy(entry.dns, 0, dns, 0, DNS_MAXLENGTH);
+		ip = new byte[IP_MAXLENGTH];
+		System.arraycopy(entry.ip, 0, ip, 0, IP_MAXLENGTH); 
+	}
 	public DNSEntry() {
 		byte[] nullarray = new String("null").getBytes();
 		dns = new byte[DNS_MAXLENGTH];
@@ -67,7 +73,7 @@ public class DNSEntry implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(new String(dns)).append(":").append(new String(ip));
+		sb.append(new String(dns).trim()).append(":").append(new String(ip).trim());
 		return sb.toString();
 	}
 	/**

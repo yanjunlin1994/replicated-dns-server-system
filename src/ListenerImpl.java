@@ -46,7 +46,6 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     @Override
     public synchronized void LeaderHeartBeat(HeartBeatMessage h) throws RemoteException {
         HeartBeatMessage mesg = h;
-//        System.out.println("[ListenerImpl][LeaderHeartBeat] [Recieve LeaderHeartBeat] " + mesg);
         InterThreadMessage lhb= new InterThreadMessage(mesg.getMyID(), this.me.getNodeID(), 
                                                 "HeartBeatMessage", mesg.toString(), mesg.getSeqNum());
         this.AcceptorListenerCommQueue.add(lhb);
@@ -62,7 +61,6 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public synchronized String clientRequest(DNSEntry dnsentry) throws RemoteException {
         String response;
         System.out.println("[Recieve clientRequest] " + dnsentry);
-//        System.out.println("[check current leader: " + this.currentLeader.getID() + "]");
         if (me.getNodeID() == this.currentLeader.getID()) {
         	/* Once receiving a new request, leader adds the request into the processQueue. */
             response = "[ I am leader, I can handle this request]"; 
@@ -88,7 +86,6 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      */
     @Override
     public Promise LeaderPrepareProposal(Proposal p) throws RemoteException {
-        System.out.println("[Recieve LeaderPrepareProposal] " + p);
         /* Slave look into its log file to check the minProposalId, acceptedId, and acceptedValue */
         DNSFile dnsfile = me.getDnsfile();
         /* get the entry for current log id. If the slave does not have an entry, return an empty entry */
@@ -100,18 +97,11 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         	realPromise = true;
         	/* slave updates the minProposalId in the entry */
         	dnsfile.writeEntry(entry);
-        	System.out.println("[Recieve LeaderPrepareProposal] promise, update proposalId: " + p.getProposalId() + " entry:" + entry);
+        	System.out.println("[Acpt receive Prepare] PROMISE. proposal: " + p + ", entry:" + entry);
         } else {
-        	System.out.println("[Recieve LeaderPrepareProposal no promise, proposalId " + p.getProposalId() +" smaller than original: " + entry.getMinProposalId() + " entry:" + entry);
+        	System.out.println("[Acpt receive Preparel NO promise. proposalId " + p.getProposalId() +" smaller than original: " + entry.getMinProposalId() + ", entry:" + entry);
         }
         Promise pro = null;
-        /* If the acceptor has accepted the value, return it to the proposer */
-        if (entry.getdns().hasAccepted()) {
-        	System.out.println("[acceptor received prepare, already accepted] ");
-        } else { 
-        	/* set accptedProposal as -1 and acceptedValue as null if the node hasn't accepted any proposal */
-        	System.out.println("[acceptor received prepare, haven't accepted] ");
-        }
         /* If the proposal's log entry is larger than node's noMoreAcceptedLogId, then noMoreAcceptedValue is set to true */
         boolean noMoreAcceptedValue = (me.getDnsfile().getNoMoreAcceptedLogId() <= p.getLogId());
         pro = new Promise(this.me.getNodeID(), entry.getAcceptedProposalId(), entry.getdns(), realPromise, noMoreAcceptedValue);
@@ -125,27 +115,25 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     public Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
         System.out.println("[Recieve LeaderAcceptProposal] " + a);
         DNSFile dnsfile = me.getDnsfile();
-        Entry entry = dnsfile.readEntry(a.getLogId());
+        Entry entry = dnsfile.readEntry(a.getLogId()), unchosenEntry = null;
         Acknlg ack = null;
         /* Use proposer's proposerId, minUnchosedLogId to validate acceptor's log entry. 
          * To validate an log entry, set the acceptedId to be INTEGER.MAX_VALUE and remove it from proposalIdToUnchosenLogId map.
          */
         HashMap<ProposalID, Set<Integer>> map = this.me.getDnsfile().getProposalIdMapToUnchosenLogId();
-        map.forEach((proposalId, set)-> {
-			set.forEach(logId -> {
-				System.out.print(proposalId+":"+logId+"\t");
-			});
-		});
+//        map.forEach((proposalId, set)-> {
+//			set.forEach(logId -> {
+//				System.out.print(proposalId+":"+logId+"\t");
+//			});
+//		});
         if (map.containsKey(a.getProposalID())) {
-        	System.out.println("[contains key(a.getProposalID())]");
 	        for (Integer unchosenLog : map.get(a.getProposalID())) {
-	        	System.out.println("can " + a.getProposalID() + " validate " + unchosenLog +" ?");
 	        	if (unchosenLog < a.getFirstUnchosenLogId()) {
-	        		System.out.println("[LeaderAcceptProposal] validate log " + unchosenLog + " by proposer's proposal.");
+	        		System.out.println("[LeaderAcceptProposal] validate log " + unchosenLog + " by accept: " + a);
 	        		/* set the entry to be chosen */
-	        		entry = this.me.getDnsfile().readEntry(unchosenLog);
-	        		entry.setChosen();
-	        		this.me.getDnsfile().writeEntry(entry);
+	        		unchosenEntry = this.me.getDnsfile().readEntry(unchosenLog);
+	        		unchosenEntry.setChosen();
+	        		this.me.getDnsfile().writeEntry(unchosenEntry);
 	        		/* remove the logId from proposalIdToUnchosenLogId map. */
 	        		this.me.getDnsfile().removeFromMap(a.getProposalID(), unchosenLog);
 	        	}
@@ -168,6 +156,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
             ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), false);
             System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack);
         }
+        System.out.println("[return leaderAcceptProposal]");
         return ack;
     }
     //------------------------------Leader election----------------------

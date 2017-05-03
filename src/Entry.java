@@ -45,6 +45,7 @@ public class Entry implements Serializable {
 			oos.flush();
 			baos.flush();
 			re = baos.toByteArray();
+			System.out.println("[Entry.toByte] size: " + re.length);
 			oos.close();
 			baos.close();
 		} catch (IOException e) {
@@ -112,7 +113,7 @@ public class Entry implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(logId).append(",").append(minProposalId).append(",").append(acceptedProposalId).append(",").append(dnsEntry);
+		sb.append(logId).append(", ").append(minProposalId).append(", ").append(acceptedProposalId).append(", ").append(dnsEntry);
 		return sb.toString();
 	}
 }

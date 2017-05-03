@@ -76,7 +76,6 @@ public class MessagePasser {
                 TimeUnit.SECONDS.sleep(7);
                 this.currentLeader.setStatus(-1);         
                 this.electionContent.setStatus(0);
-//                this.myConfig.removeNode(this.currentLeader.getID());
                 this.currentLeader.setID(-1);  
                 this.runForElectionEntrance();
                 TimeUnit.SECONDS.sleep(5);

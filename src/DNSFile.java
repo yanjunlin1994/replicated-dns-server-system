@@ -44,7 +44,7 @@ public class DNSFile {
 			System.err.println("[DNSFile removeFromMap] The proposalId is not in the map");
 		}
 		HashSet<Integer> set = (HashSet<Integer>) proposalIdMapToUnchosenLogId.get(proposalId);
-		if (!set.contains(proposalId)) {
+		if (!set.contains(logId)) {
 			System.err.println("[DNSFile removeFromMap] The logId is not in the map");
 		}
 		set.remove(logId);

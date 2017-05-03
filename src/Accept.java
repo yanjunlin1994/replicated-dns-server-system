@@ -49,6 +49,6 @@ public class Accept implements Serializable {
     }
     @Override
     public String toString() { 
-        return "[Accept " + " ID." + this.proposalId + " " + this.dnsentry + "]";
+        return "proposalId: " + this.proposalId + ", entry: " + this.dnsentry;
     }
 }

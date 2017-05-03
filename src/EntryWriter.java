@@ -19,7 +19,8 @@ public class EntryWriter {
 	private static final String FIRSTLINE = "minUnchosenLogId/proposalId/unAcceptedLogId  log id/minProposalId/acceptedProposalId/dns:ip" + System.getProperty("line.separator");
 	private RandomAccessFile raf;
 	/* headcount is the length of meta data in file's head */
-	private int headcount = FIRSTLINE.length() + System.getProperty("line.separator").length() + INT_BYTE_SIZE*2 + PROPOSALID_SIZE;
+//	private int headcount = FIRSTLINE.length() + System.getProperty("line.separator").length() + INT_BYTE_SIZE*2 + PROPOSALID_SIZE;
+	private int headcount = FIRSTLINE.length() + INT_BYTE_SIZE*2 + PROPOSALID_SIZE;
 	public EntryWriter(String filename, int node) throws IOException {
 		file = new File(filename);
 		if (!file.exists()) {
@@ -33,7 +34,7 @@ public class EntryWriter {
             raf.write(new ProposalID(node).toByte());
             /* the unAcceptedLogId. Initially the log is empty, and it doesn't accept anything */
             raf.writeInt(0);
-			raf.writeBytes(System.getProperty("line.separator"));
+//			raf.writeBytes(System.getProperty("line.separator"));
 			raf.close();
 		}
 	}
@@ -149,11 +150,12 @@ public class EntryWriter {
 		Entry entry = null;
 		try {
 			byte[] byteArray = new byte[ENTRY_SIZE];
+			/* If I set target as headcount+logId*ENTRY_SIZE-1, the acceptor will always read 1 more byte */
 			int target = headcount + logId * ENTRY_SIZE;
 			raf.seek(target);
 			int filelength = (int) file.length();
 			if (target >= filelength) {
-				System.out.println("[EntryWriter read] Reach the end of the file");
+				System.out.println("[EntryWriter read] Reach the end of the file, this is log: " + logId);
 				entry = new Entry(logId);
 				write(entry);
 			} else {
@@ -188,8 +190,8 @@ public class EntryWriter {
 		try {
 			int target = headcount + logId * ENTRY_SIZE;
 			raf.seek(target);
-			System.out.println("\twrite log at: " + target + ", " + entry);
 			raf.write(entry.toByte());
+			System.out.println("\twrite log at: " + target + ", " + entry+". Size: " + entry.toByte().length);
 			raf.close();
 		} catch (IOException e) {
 			e.printStackTrace();

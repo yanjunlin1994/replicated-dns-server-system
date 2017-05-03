@@ -165,4 +165,7 @@ public class Round {
                 maxMinproposal);
         return maxMinproposal;
     }
+    public void setLogId(int logId) {
+    	this.logId = logId;
+    }
 }

@@ -19,7 +19,7 @@ public class Proposal implements Serializable {
     public Proposal(Proposal p) {
         this.logId = p.getLogId();
         this.proposalId = new ProposalID(p.getProposalId());
-        this.dnsentry = p.getDnsentry();//TODO:
+        this.dnsentry = new DNSEntry(p.getDnsentry());//TODO:
     }
     public int getLogId() {
 		return logId;
@@ -37,10 +37,10 @@ public class Proposal implements Serializable {
 		return dnsentry;
 	}
 	public void setDnsentry(DNSEntry dnsentry) {
-		this.dnsentry = dnsentry;
+		this.dnsentry = new DNSEntry(dnsentry);
 	}
     @Override
     public String toString() { 
-        return "[Log ID. " + this.logId + " Proposal ID." + this.proposalId + " " + this.dnsentry + "]";
+        return "[Log ID: " + this.logId + ", Proposal ID:" + this.proposalId + ", " + this.dnsentry + "]";
     }
 }
