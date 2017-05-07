@@ -1,5 +1,5 @@
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Acceptor routine
@@ -13,16 +13,16 @@ public class AcceptorRoutine implements Runnable {
     private BlockingQueue<InterThreadMessage> AcceptorMpCommQueue;
     private final int longestHeartBeatInterval = 10_000;
     private final int MaxLeaderFailureCount = 6;
-    
-    public AcceptorRoutine(int id, Configuration myConfig, BlockingQueue<InterThreadMessage> al, BlockingQueue<InterThreadMessage> am) {
+    private int leaderID;
+    public AcceptorRoutine(int id, Configuration myConfig, BlockingQueue<InterThreadMessage> am, BlockingQueue<InterThreadMessage> al, int leaderID) {
         this.myID = id;
         this.myConfig = myConfig;
         this.latestHeartbeat = 0;
         this.leaderFailCount = 0;
         this.AcceptorListenerCommQueue = al;
         this.AcceptorMpCommQueue = am;
+        this.leaderID = leaderID;
     }
-    @SuppressWarnings("resource")
     @Override
     public synchronized void run() {
         System.out.println("[AR.run]");
@@ -54,12 +54,15 @@ public class AcceptorRoutine implements Runnable {
     }
     /**
      * Process the newly coming message in message queue.
-     * @param newM If it is a heartbeat message, update the latest hearbeat time.
+     * @param newM If it is a heartbeat message from its leader, update the latest hearbeat time.
      */
-    public void processInterThreadMessage(InterThreadMessage newM) {
-        if (newM.getKind().equals("HeartBeatMessage")) {
+    public synchronized void processInterThreadMessage(InterThreadMessage newM) {
+        if (newM.getKind().equals("HeartBeatMessage") && newM.getSrc() == leaderID) {
             this.setLatestHeartbeat(System.currentTimeMillis()); 
         }
+    }
+    public void setLeaderID(int leaderID) {
+    	this.leaderID = leaderID;
     }
     /**
      * Check if there is a timeout since last heartbeat.

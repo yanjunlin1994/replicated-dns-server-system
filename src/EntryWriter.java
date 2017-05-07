@@ -2,10 +2,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 /**
  * EntryWriter class is used to read/write dnsFile entry by entry.
@@ -38,7 +37,7 @@ public class EntryWriter {
 			raf.close();
 		}
 	}
-	public HashMap<ProposalID, Set<Integer>> getProposalIdMapToUnchosenLogId() {
+	public synchronized HashMap<ProposalID, Set<Integer>> getProposalIdMapToUnchosenLogId() {
 		HashMap<ProposalID, Set<Integer>> map = new HashMap<ProposalID, Set<Integer>>();
 		int noMoreAcceptedLogId = readNoMoreAcceptedLogId();
 		Entry entry = null;
@@ -57,7 +56,7 @@ public class EntryWriter {
  	/**
 	 * Read the value of noMoreAcceptedLogId from the log.
 	 */
-	public int readNoMoreAcceptedLogId() {
+	public synchronized int readNoMoreAcceptedLogId() {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE + PROPOSALID_SIZE);
@@ -73,7 +72,7 @@ public class EntryWriter {
 	/**
 	 * Write the noMoreAcceptedLogId to log.
 	 */
-	public void writeNoMoreAcceptedLogId(int id) {
+	public synchronized void writeNoMoreAcceptedLogId(int id) {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE + PROPOSALID_SIZE);
@@ -85,7 +84,7 @@ public class EntryWriter {
 			e.printStackTrace();
 		}
 	}
-	public ProposalID readProposalId() {
+	public synchronized ProposalID readProposalId() {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE);
@@ -100,7 +99,7 @@ public class EntryWriter {
 		}
 		return new ProposalID();
 	}
-	public void writeProposalId(ProposalID proposalId) {
+	public synchronized void writeProposalId(ProposalID proposalId) {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE);
@@ -112,7 +111,7 @@ public class EntryWriter {
 			e.printStackTrace();
 		}
 	}
-	public void writeMinUnchosenLogId(int id) {
+	public synchronized void writeMinUnchosenLogId(int id) {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 			raf.seek(FIRSTLINE.length());
@@ -124,7 +123,7 @@ public class EntryWriter {
 			e.printStackTrace();
 		}
 	}
-	public int readMinUnchosenLogId() {
+	public synchronized int readMinUnchosenLogId() {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 			raf.seek(FIRSTLINE.length());
@@ -141,7 +140,7 @@ public class EntryWriter {
 	/**
 	 * read Entry object from dnsFile.
 	 */
-	public Entry read(int logId) {
+	public synchronized Entry read(int logId) {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 		} catch (FileNotFoundException e1) {
@@ -156,6 +155,7 @@ public class EntryWriter {
 			int filelength = (int) file.length();
 			if (target >= filelength) {
 				System.out.println("[EntryWriter read] Reach the end of the file, this is log: " + logId);
+				System.out.println("\t\t1");
 				entry = new Entry(logId);
 				write(entry);
 			} else {
@@ -163,6 +163,12 @@ public class EntryWriter {
 				if (len < ENTRY_SIZE) {
 					throw new RuntimeException("[EntryWriter read] Didn't read enough bytes");
 				} else {
+					/* If it is an totally empty entry: all 0s, return empty dns Entry */
+					if (Arrays.equals(byteArray, new byte[ENTRY_SIZE])) {
+						System.out.println("\t\t2");
+						return new Entry(0);
+					}
+					System.out.println("logId:" + logId + ", byte size: " + byteArray.length + ", ENTRY_SIZE: " + ENTRY_SIZE);
 					entry = new Entry(byteArray);
 				}
 			}
@@ -177,7 +183,7 @@ public class EntryWriter {
 	/**
 	 * Write entry content to its log slot in dnsFile.
 	 */ 
-	public void write(Entry entry) {
+	public synchronized void write(Entry entry) {
 		try {
 			raf = new RandomAccessFile(file, "rw");
 		} catch (FileNotFoundException e1) {
@@ -196,5 +202,8 @@ public class EntryWriter {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	public synchronized int logNum() {
+		return (int) ((file.length() - headcount) /  ENTRY_SIZE);
 	}
 }

@@ -1,15 +1,8 @@
 import java.net.MalformedURLException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
-import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -19,10 +12,10 @@ public class MessagePasser {
     private int myID;
     private ListenerImpl listener;
     private Leader currentLeader;
-    private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
     private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
     private BlockingQueue<InterThreadMessage> AcceptorMpCommQueue;
     private BlockingQueue<InterThreadMessage> LeaderMpCommQueue;
+    private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
     private ElectionContent electionContent;
     /**
      * Constructor
@@ -37,10 +30,10 @@ public class MessagePasser {
         /* set the dns file for current node */
         this.me.setDnsfile(new DNSFile(this.myID)); 
         this.currentLeader = new Leader();
-        this.AcceptorListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.LeaderListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.AcceptorMpCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.LeaderMpCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
+        this.AcceptorListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.electionContent = new ElectionContent();
 
         try {
@@ -63,141 +56,155 @@ public class MessagePasser {
         TimeUnit.SECONDS.sleep(10); //wait for other DNS replicas join in
         this.myConfig.updateListenerIntfMap(this.myID);
         TimeUnit.SECONDS.sleep(8);
-        this.LeaderElectionSection();
+        /* Initial leader election */
+        this.currentLeader.setID(1);
+        /* What does setStatus mean */
+        this.currentLeader.setStatus(1);
+//        this.LeaderElectionSection();
         TimeUnit.SECONDS.sleep(2);
         InterThreadMessage msg = null;
         /* open acceptor routine */
-        new Thread(new AcceptorRoutine(this.myID, this.myConfig, this.AcceptorListenerCommQueue, this.AcceptorMpCommQueue)).start();
-        /* for leader, open leader routine */
+        AcceptorRoutine acceptRoutine = new AcceptorRoutine(this.myID, this.myConfig, this.AcceptorMpCommQueue, this.AcceptorListenerCommQueue, this.currentLeader.getID());
+        new Thread(acceptRoutine).start();
+        /* TODO: for leader, open leader routine. how can I combine this leader election with the latter one? */
         if (currentLeader.getID() == myID) {
-        	new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader, this.LeaderListenerCommQueue, this.LeaderMpCommQueue)).start();
+        	new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader, this.LeaderMpCommQueue)).start();
         }
-        while (true) {
-        	if (!AcceptorMpCommQueue.isEmpty()) {
-        		msg = AcceptorMpCommQueue.poll();
-        		if (msg.getKind().equals("leaderElection")) {
-        			System.out.println("[MP.run] Elect a new leader.");
-                    TimeUnit.SECONDS.sleep(7);
-                    this.currentLeader.setStatus(-1);         
-                    this.electionContent.setStatus(0);
-                    this.currentLeader.setID(-1);  
-                    this.runForElectionEntrance();
-                    TimeUnit.SECONDS.sleep(5);
-                    if (this.electionContent.getBiggestCandidate() == this.myID) {
-                        this.broadcastVictory();
-                        new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader, this.LeaderListenerCommQueue, this.LeaderMpCommQueue)).start();
-                    }   
-                    this.electionContent.clear();
-        		}
-        	}
-            Thread.sleep(5000);
-        }
+        /* TODO: In the first experiment, leader will not change
+        /* In the second experiment, change leader 
+         */
+//        while (true) {
+//        	/* AcceptorRoutine will notify MessagePasser to elect new leader */
+//        	
+//        	if (!AcceptorMpCommQueue.isEmpty()) {
+//        		msg = AcceptorMpCommQueue.poll();
+//        		/* TODO: How to detect duplicate, by adding a unique number in each message. Reset the unique number each time acceptor changes a leader */
+//        		if (msg.getKind().equals("leaderElection")) {
+//        			System.out.println("[MP.run] Elect a new leader.");
+//                    TimeUnit.SECONDS.sleep(7);
+//                    /* start to elect a new leader */
+//                    this.currentLeader.setStatus(-1);        
+//                    this.electionContent.setStatus(0);
+//                    this.currentLeader.setID(-1);
+//                    /* TODO: If the majority does not vote yes, the node should not be the leader */
+//                    this.runForElectionEntrance();
+//                    TimeUnit.SECONDS.sleep(5);
+//                    if (this.electionContent.getBiggestCandidate() == this.myID) {
+//                        this.broadcastVictory();
+//                        new Thread(new LeaderRoutine(this.myID, this.myConfig, this.currentLeader, this.LeaderListenerCommQueue, this.LeaderMpCommQueue)).start();
+//                    }
+//                    acceptRoutine.setLeaderID(this.currentLeader.getID());
+//                    this.electionContent.clear();
+//        		}
+//        	}
+//            Thread.sleep(5000);
+//        }
     }
     //--------------------------------------Election------------------------------------------
-    /**
-     * Elect a new leader according to id
-     * @param currentld
-     */
-    public synchronized int LeaderElectionSection() {
-        int nextLeaderID = -1;
-        nextLeaderID = this.myConfig.getNextLeader(this.currentLeader.getID());
-        this.currentLeader.clean();
-        this.currentLeader.setID(nextLeaderID);
-        this.currentLeader.setStatus(1);
-        if (this.myID == nextLeaderID) {
-            System.out.println("[LeaderElectionSection] I am the leader!"); 
-        }
-        System.out.println("[LeaderElectionSection] leader is:" + this.currentLeader);  
-        return nextLeaderID;
-    }
-    //------------------- entrance for running for leader
-    public void runForElectionEntrance() {
-        if (this.ProposeToBeLeader() != 1) {
-//            System.out.println("[runForElectionEntrance] first stage return"); 
-            return;
-        }
-        if (this.ConfirmToBeLeader() != 1) {
-//            System.out.println("[runForElectionEntrance] second stage return");
-            return;
-        }
-        
-    }
-    //------------------- First stage of running for leader
-    public synchronized int ProposeToBeLeader() {
-        // set the biggest candidate id to be my ID if myID is larger that candidate id
-        if (this.electionContent.getBiggestCandidate() > this.myID) {
-            return 0;
-        } 
-        //set my proposal to other nodes to verify that the old leader can no longer be reached by a majority
-        int agreeCount = 0;
-        for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
-            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
-            try {
-                boolean agree = lisnode.ElectLeaderRequest(this.myID);
-                System.out.println("[MP] [WantToBeLeader] first stage agree Recived from " + noid + ": " + agree);
-                if (agree) {
-                    agreeCount++;
-                }
-            } catch (Exception e) {
-                System.err.println("[MP] [WantToBeLeader] Someone loses connection");
-//                this.myConfig.removeNode(noid);
-                continue;//continue to other listeners
-            }
-        }
-        if (this.electionContent.getBiggestCandidate() <= this.myID) {
-            agreeCount++;
-        }
-        if (agreeCount >= (this.getMajorityNumber())) {
-            System.out.println("[MP] [WantToBeLeader] agreeCount: " + agreeCount);
-           return 1;
-        }
-        return 0;
-    }
-    //------------------- Second stage of running for leader
-    public synchronized int ConfirmToBeLeader() {
-        int agreeCount = 0;
-        for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
-            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
-            try {
-                boolean agree = lisnode.ElectLeaderConfirm(this.myID);
-                System.out.println("[MP] [ConfirmToBeLeader] second stage agree Recived from " + noid + ": " + agree);
-                if (agree) {
-                    agreeCount++;
-                }
-            } catch (Exception e) {
-                System.err.println("[MP] [ConfirmToBeLeader] Someone loses connection");
-//                this.myConfig.removeNode(noid);
-                continue;//continue to other listeners
-            }
-        }
-        if (this.electionContent.getBiggestCandidate() <= this.myID) {
-            agreeCount++;
-        }
-        if (agreeCount >= this.getMajorityNumber()) {
-            this.electionContent.setBiggestCandidate(this.myID);
-           return 1;
-        }  
-        return 0;
-    }
-    public synchronized void broadcastVictory() {
-        System.out.println("[MP] [broadcastVictory]");
-        this.currentLeader.setStatus(1);
-        this.currentLeader.setID(this.myID);
-        this.electionContent.setStatus(1);
-        this.electionContent.setBiggestCandidate(-1); //clear the candidate
-        for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
-            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
-            try {
-                lisnode.ElectLeaderVictory(this.myID);
-            } catch (Exception e) {
-                System.err.println("[MP] [ConfirmToBeLeader] Someone loses connection");
-//                this.myConfig.removeNode(noid);
-                continue;//continue to other listeners
-            }
-        }
-    }
-    public int getMajorityNumber() {
-//        System.out.println("[MP majority] " + ((this.myConfig.getNodeMap().size() / 2) + 1));
-        return ((this.myConfig.getNodeMap().size() / 2) + 1);
-    }
+//    /**
+//     * Elect a new leader according to id
+//     * @param currentld
+//     */
+//    public synchronized int LeaderElectionSection() {
+//        int nextLeaderID = -1;
+//        nextLeaderID = this.myConfig.getNextLeader(this.currentLeader.getID());
+//        this.currentLeader.clean();
+//        this.currentLeader.setID(nextLeaderID);
+//        this.currentLeader.setStatus(1);
+//        if (this.myID == nextLeaderID) {
+//            System.out.println("[LeaderElectionSection] I am the leader!"); 
+//        }
+//        System.out.println("[LeaderElectionSection] leader is:" + this.currentLeader);  
+//        return nextLeaderID;
+//    }
+//    //------------------- entrance for running for leader
+//    public void runForElectionEntrance() {
+//        if (this.ProposeToBeLeader() != 1) {
+////            System.out.println("[runForElectionEntrance] first stage return"); 
+//            return;
+//        }
+//        if (this.ConfirmToBeLeader() != 1) {
+////            System.out.println("[runForElectionEntrance] second stage return");
+//            return;
+//        }
+//        
+//    }
+//    //------------------- First stage of running for leader
+//    public synchronized int ProposeToBeLeader() {
+//        // set the biggest candidate id to be my ID if myID is larger that candidate id
+//        if (this.electionContent.getBiggestCandidate() > this.myID) {
+//            return 0;
+//        } 
+//        //set my proposal to other nodes to verify that the old leader can no longer be reached by a majority
+//        int agreeCount = 0;
+//        for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
+//            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
+//            try {
+//                boolean agree = lisnode.ElectLeaderRequest(this.myID);
+//                System.out.println("[MP] [WantToBeLeader] first stage agree Recived from " + noid + ": " + agree);
+//                if (agree) {
+//                    agreeCount++;
+//                }
+//            } catch (Exception e) {
+//                System.err.println("[MP] [WantToBeLeader] Someone loses connection");
+////                this.myConfig.removeNode(noid);
+//                continue;//continue to other listeners
+//            }
+//        }
+//        if (this.electionContent.getBiggestCandidate() <= this.myID) {
+//            agreeCount++;
+//        }
+//        if (agreeCount >= (this.getMajorityNumber())) {
+//            System.out.println("[MP] [WantToBeLeader] agreeCount: " + agreeCount);
+//           return 1;
+//        }
+//        return 0;
+//    }
+//    //------------------- Second stage of running for leader
+//    public synchronized int ConfirmToBeLeader() {
+//        int agreeCount = 0;
+//        for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
+//            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
+//            try {
+//                boolean agree = lisnode.ElectLeaderConfirm(this.myID);
+//                System.out.println("[MP] [ConfirmToBeLeader] second stage agree Recived from " + noid + ": " + agree);
+//                if (agree) {
+//                    agreeCount++;
+//                }
+//            } catch (Exception e) {
+//                System.err.println("[MP] [ConfirmToBeLeader] Someone loses connection");
+////                this.myConfig.removeNode(noid);
+//                continue;//continue to other listeners
+//            }
+//        }
+//        if (this.electionContent.getBiggestCandidate() <= this.myID) {
+//            agreeCount++;
+//        }
+//        if (agreeCount >= this.getMajorityNumber()) {
+//            this.electionContent.setBiggestCandidate(this.myID);
+//           return 1;
+//        }  
+//        return 0;
+//    }
+//    public synchronized void broadcastVictory() {
+//        System.out.println("[MP] [broadcastVictory]");
+//        this.currentLeader.setStatus(1);
+//        this.currentLeader.setID(this.myID);
+//        this.electionContent.setStatus(1);
+//        this.electionContent.setBiggestCandidate(-1); //clear the candidate
+//        for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
+//            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
+//            try {
+//                lisnode.ElectLeaderVictory(this.myID);
+//            } catch (Exception e) {
+//                System.err.println("[MP] [ConfirmToBeLeader] Someone loses connection");
+////                this.myConfig.removeNode(noid);
+//                continue;//continue to other listeners
+//            }
+//        }
+//    }
+//    public int getMajorityNumber() {
+////        System.out.println("[MP majority] " + ((this.myConfig.getNodeMap().size() / 2) + 1));
+//        return ((this.myConfig.getNodeMap().size() / 2) + 1);
+//    }
 }

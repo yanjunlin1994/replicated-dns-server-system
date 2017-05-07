@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import org.yaml.snakeyaml.Yaml;
 import java.util.List;
@@ -51,11 +50,10 @@ public class Configuration {
             String lookupName = "//localhost:" + nd.getPort() + "/Listener" + nd.getNodeID();
             try {
                 ListenerIntf NodeListener = (ListenerIntf) Naming.lookup(lookupName);
-                HeartBeatMessage hello = new HeartBeatMessage(myID, "hello", "hello :D");
-                HeartBeatMessage helloBack = NodeListener.HelloChat(hello);
                 this.ListenerIntfMap.put(nd.getNodeID(),NodeListener);//put in ListenerInterface map
-                System.out.println("[updateListenerIntfMap] [Recieve HelloBACK] "+ helloBack);
             } catch (Exception e) {
+            	/* If the connection fails, put a null value */
+            	this.ListenerIntfMap.put(nd.getNodeID(), null);
                 System.out.println("[updateListenerIntfMap] connection fails with Node." + nd.getNodeID());
                 continue;
             }

@@ -1,14 +1,19 @@
 import java.io.Serializable;
 import java.util.Arrays;
 
-public class ProposalID implements Serializable, Comparable {
+public class ProposalID implements Serializable, Comparable<ProposalID> {
 	private static final long serialVersionUID = 1141384734335772126L;
 	private int roundId;
 	private int nodeId;
+	public static final ProposalID CHOSEN_PROPOSALID= new ProposalID(Integer.MAX_VALUE, Integer.MAX_VALUE);
 	/* TODO: when to use an empty proposal? */
 	public ProposalID() {
 		this.roundId = -1;
 		this.nodeId = -1;
+	}
+	public ProposalID(int roundId, int nodeId) {
+		this.roundId = roundId;
+		this.nodeId = nodeId;
 	}
 	public ProposalID(byte[] byteArray) {
 		roundId = byteToInt(Arrays.copyOfRange(byteArray, 0, 4));
@@ -23,13 +28,15 @@ public class ProposalID implements Serializable, Comparable {
 		this.nodeId = pi.nodeId;
 	}
 	public int Compare(ProposalID pi) {
-		if (roundId > pi.roundId) {
+		if (roundId == Integer.MAX_VALUE && pi.getRoundId() == Integer.MAX_VALUE) {
+			return 0;
+		} else if (roundId > pi.roundId) {
 			return 1;
 		} else if (roundId < pi.roundId) {
 			return -1;
-		} else if (nodeId > pi.roundId) {
+		} else if (nodeId > pi.nodeId) {
 			return 1;
-		} else if (nodeId < pi.roundId) {
+		} else if (nodeId < pi.nodeId) {
 			return -1;
 		} else {
 			return 0;
@@ -63,8 +70,7 @@ public class ProposalID implements Serializable, Comparable {
 		return re;
 	}
 	@Override
-	public int compareTo(Object o) {
-		ProposalID pi = (ProposalID) o;
+	public int compareTo(ProposalID pi) {
 		return this.Compare(pi);
 	}
 	public boolean isNone() {
@@ -80,10 +86,16 @@ public class ProposalID implements Serializable, Comparable {
 	}
 	@Override
 	public boolean equals(Object o) {
-		return this.compareTo(o) == 0;
+		return this.compareTo((ProposalID) o) == 0;
 	}
 	@Override
 	public int hashCode() {
+		if (roundId == Integer.MAX_VALUE) {
+			return new Integer(Integer.MAX_VALUE).hashCode()/7;
+		}
 		return new Integer(roundId).hashCode() / 7 + new Integer(nodeId).hashCode() / 6 * 5;
+	}
+	public boolean isChosen() {
+		return roundId == Integer.MAX_VALUE;
 	}
 }

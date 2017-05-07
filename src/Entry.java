@@ -43,7 +43,7 @@ public class Entry implements Serializable {
 			oos.flush();
 			baos.flush();
 			re = baos.toByteArray();
-			System.out.println("[Entry.toByte] size: " + re.length);
+//			System.out.println("[Entry.toByte] size: " + re.length);
 			oos.close();
 			baos.close();
 		} catch (IOException e) {
@@ -65,6 +65,7 @@ public class Entry implements Serializable {
 		byte[] array = new byte[DNSENTRY_SIZE];
 		int entrylen = ois.read(array);
 		if (entrylen < DNSENTRY_SIZE) {
+			System.out.println(entrylen + "," + DNSENTRY_SIZE);
 			throw new RuntimeException("[Entry byteArray] Didn't read enough bytes");
 		} else {
 			dnsEntry = new DNSEntry(array);
@@ -81,6 +82,7 @@ public class Entry implements Serializable {
 	/* Set acceptedProposalId to MAX_VALUE */
 	protected void setChosen() {
 		acceptedProposalId.setRoundId(Integer.MAX_VALUE);
+		minProposalId.setRoundId(Integer.MAX_VALUE);
 	}
 	public int getLogId() {
 		return logId;

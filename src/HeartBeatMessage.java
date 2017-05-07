@@ -5,7 +5,8 @@ import java.io.Serializable;
  *
  */
 public class HeartBeatMessage implements Serializable {
-    private int myID;
+	private static final long serialVersionUID = 4456727053170635678L;
+	private int myID;
     private String kind;  
     private String content;
     private int seqNum;

@@ -1,3 +1,7 @@
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 /**
  * Leader sends heart beat messages to every acceptors
@@ -10,7 +14,6 @@ public class LeaderHeartBeat implements Runnable {
         this.myID = id;
         this.myConfig = myConfig;   
     }
-    @SuppressWarnings("resource")
     @Override
     public void run(){
         System.out.println("[LeaderRoutine] [LeaderHeartBeat starts]");
@@ -26,11 +29,16 @@ public class LeaderHeartBeat implements Runnable {
         } 
     }
     public void MulticastLeaderHeartBeat(HeartBeatMessage hbmessage) {
-        for (ListenerIntf lisnode : this.myConfig.getListenerIntfMap().values()) {
+    	for (int noid : this.myConfig.getListenerIntfMap().keySet()) {
+            ListenerIntf lisnode = this.myConfig.getListenerIntfMap().get(noid);
             try {
                 lisnode.LeaderHeartBeat(hbmessage);  
             } catch (Exception e) {
-//                System.err.println("[LeaderRoutine] [LeaderHeartBeat] Someone close the connection");
+            	try {
+					this.myConfig.getListenerIntfMap().put(noid, (ListenerIntf) Naming.lookup("//localhost:" + this.myConfig.getNodeMap().get(noid).getPort() + "/Listener" + noid));
+				} catch (MalformedURLException | RemoteException | NotBoundException e1) {
+					System.err.println("[LH.MulticastLeaderHeartBeat] reconnect node " + noid + " fails");
+				}
                 continue;
             }
         }

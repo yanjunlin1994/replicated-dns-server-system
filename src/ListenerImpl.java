@@ -2,7 +2,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
@@ -12,7 +11,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
     private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
     private Leader currentLeader;
-    private ElectionContent electionContent;
+//    private ElectionContent electionContent;
     /**
      * Constructor
      * @param config
@@ -27,18 +26,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         this.AcceptorListenerCommQueue = ai;
         this.LeaderListenerCommQueue = li;
         this.currentLeader = cl;
-        this.electionContent = ec;
-    }
-    /**
-     * When slave receives a hello message from master, it will print out the hello message, as well
-     * as sends back a acknowledgment.
-     */
-    @Override
-    public HeartBeatMessage HelloChat(HeartBeatMessage h) throws RemoteException {
-        HeartBeatMessage mesg = h;
-        System.out.println("[Recieve Hello] " + mesg);
-        HeartBeatMessage helloBack = new HeartBeatMessage(this.me.getNodeID(), "hello", "helloback");
-        return helloBack;
+//        this.electionContent = ec;
     }
     /**
      * When slaves receive a heartbeat message from master, it will add the message into the AcceptorLisenerCommQueue.
@@ -72,8 +60,9 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
                 response = "[ We haven't elect a leader yet ]";
             } else {
             	/* If client sends request to the acceptor, acceptor forward the request to leader. */
-            	myConfig.getListenerIntfMap().get(currentLeader.getID()).clientRequest(dnsentry);
             	response = "[ I am not leader, I will forward your request to the leader " + this.currentLeader.getID() + "]";
+            	System.out.println(response);
+            	myConfig.getListenerIntfMap().get(currentLeader.getID()).clientRequest(dnsentry);
             }
         }
         return response;
@@ -85,7 +74,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      * Return the acceptor's <acceptedProposal, acceptedValue>, return <null, null> if it hasn't accepted any.
      */
     @Override
-    public Promise LeaderPrepareProposal(Proposal p) throws RemoteException {
+    public synchronized Promise LeaderPrepareProposal(Proposal p) throws RemoteException {
         /* Slave look into its log file to check the minProposalId, acceptedId, and acceptedValue */
         DNSFile dnsfile = me.getDnsfile();
         /* get the entry for current log id. If the slave does not have an entry, return an empty entry */
@@ -112,20 +101,17 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      * If the acceptor's minproposal is smaller than the leader's proposal id, update its minProposalId.
      */
     @Override
-    public Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
+    public synchronized Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
         System.out.println("[Recieve LeaderAcceptProposal] " + a);
         DNSFile dnsfile = me.getDnsfile();
+        /* Entry object entry is at logId */
         Entry entry = dnsfile.readEntry(a.getLogId()), unchosenEntry = null;
         Acknlg ack = null;
         /* Use proposer's proposerId, minUnchosedLogId to validate acceptor's log entry. 
          * To validate an log entry, set the acceptedId to be INTEGER.MAX_VALUE and remove it from proposalIdToUnchosenLogId map.
          */
         HashMap<ProposalID, Set<Integer>> map = this.me.getDnsfile().getProposalIdMapToUnchosenLogId();
-//        map.forEach((proposalId, set)-> {
-//			set.forEach(logId -> {
-//				System.out.print(proposalId+":"+logId+"\t");
-//			});
-//		});
+        int maxValidateLog = -1;
         if (map.containsKey(a.getProposalID())) {
 	        for (Integer unchosenLog : map.get(a.getProposalID())) {
 	        	if (unchosenLog < a.getFirstUnchosenLogId()) {
@@ -133,12 +119,17 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
 	        		/* set the entry to be chosen */
 	        		unchosenEntry = this.me.getDnsfile().readEntry(unchosenLog);
 	        		unchosenEntry.setChosen();
+	        		if (unchosenEntry.getLogId() > maxValidateLog) {
+	        			maxValidateLog = unchosenEntry.getLogId();
+	        		}
 	        		this.me.getDnsfile().writeEntry(unchosenEntry);
 	        		/* remove the logId from proposalIdToUnchosenLogId map. */
 	        		this.me.getDnsfile().removeFromMap(a.getProposalID(), unchosenLog);
 	        	}
 	        }
         }
+        this.me.getDnsfile().incrementMinUnchosenLogId(maxValidateLog);
+        
         /* If the proposer's proposerId is larger than acceptor's minProposal */
         if (a.getProposalID().Compare(entry.getMinProposalId()) >= 0) {
         	/* If an acceptor accepts a value, check if its noMoreAcceptedLogId needs to be updated */
@@ -151,41 +142,41 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
             ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), true);
             /* add the unchosen log into proposalIdToUnchosenLogId map */
             this.me.getDnsfile().addToMap(a.getProposalID(), a.getLogId());
-            System.out.println("[Recieve LeaderAcceptProposal ACK! ] " + ack + ", "+entry);
+            System.out.println("[Recieve LeaderAcceptProposal ACK! ] "+ ack + ", accept:" + a + ", entry: " + entry);
         } else {
             ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), false);
-            System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack);
+            System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack + ", accept:" + a + ", entry: " + entry);
         }
-        System.out.println("[return leaderAcceptProposal]");
+//        System.out.println("[return leaderAcceptProposal]");
         return ack;
     }
-    //------------------------------Leader election----------------------
-    @Override
-    public boolean ElectLeaderRequest(int proid) throws RemoteException {
-        System.out.println("[Recieve ElectLeaderRequest] " + proid);
-        if ((this.currentLeader.getStatus() == -1) && (this.electionContent.getStatus() == 0) &&
-                (this.electionContent.getBiggestCandidate() <= proid)) {
-            return true;
-        }
-        return false;
-    }
-    @Override
-    public synchronized boolean ElectLeaderConfirm(int proid) throws RemoteException {
-        System.out.println("[Recieve ElectLeaderConfirm] " + proid);
-        if ((this.currentLeader.getStatus() == -1) && (this.electionContent.getStatus() == 0) &&
-                (this.electionContent.getBiggestCandidate() <= proid)) {
-            this.electionContent.setBiggestCandidate(proid);
-            return true;
-        }
-        return false;
-    }
-    @Override
-    public synchronized void ElectLeaderVictory(int proid) throws RemoteException {
-        System.out.println("[Recieve ElectLeaderVictory] " + proid);
-        this.currentLeader.setStatus(1);
-        this.currentLeader.setID(proid);
-        this.electionContent.setStatus(1);
-        this.electionContent.setBiggestCandidate(-1); //clear the candidate
-    }
-    
+//    //------------------------------Leader election----------------------
+//    @Override
+//    public synchronized boolean ElectLeaderRequest(int proid) throws RemoteException {
+//        System.out.println("[Recieve ElectLeaderRequest] " + proid);
+//        if ((this.currentLeader.getStatus() == -1) && (this.electionContent.getStatus() == 0) &&
+//                (this.electionContent.getBiggestCandidate() <= proid)) {
+//            return true;
+//        }
+//        return false;
+//    }
+//    @Override
+//    public synchronized boolean ElectLeaderConfirm(int proid) throws RemoteException {
+//        System.out.println("[Recieve ElectLeaderConfirm] " + proid);
+//        if ((this.currentLeader.getStatus() == -1) && (this.electionContent.getStatus() == 0) &&
+//                (this.electionContent.getBiggestCandidate() <= proid)) {
+//            this.electionContent.setBiggestCandidate(proid);
+//            return true;
+//        }
+//        return false;
+//    }
+//    @Override
+//    public synchronized void ElectLeaderVictory(int proid) throws RemoteException {
+//        System.out.println("[Recieve ElectLeaderVictory] " + proid);
+//        this.currentLeader.setStatus(1);
+//        this.currentLeader.setID(proid);
+//        this.electionContent.setStatus(1);
+//        this.electionContent.setBiggestCandidate(-1); //clear the candidate
+//    }
+//    
 }

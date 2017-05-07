@@ -1,17 +1,15 @@
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 /**
  * ALL Information in a single Round
  *
  */
 public class Round {
     private int nodeID;
-    private int RoundID;
+//    private int RoundID;
     
-    private Proposal currentProposal;
+    private Proposal prepareProposal;
     private int promiseCount;
     private HashMap<Integer, Promise> promiseMap;
     
@@ -20,12 +18,12 @@ public class Round {
     
     private HashMap<Integer, Acknlg> AcknlgMap;
     private boolean rejAck;
-    /** record the rej's minproposal ID */
+    /* record the rej's minproposal ID */
     private HashSet<ProposalID> rejAcknlgSet;
     private int logId;
     public Round(int nid, int rid, int logId) {
         this.nodeID = nid;
-        this.RoundID = rid;
+//        this.RoundID = rid;
         this.promiseCount = 0;
         this.promiseMap = new HashMap<Integer, Promise>();
         this.acceptCount = 0;
@@ -43,17 +41,23 @@ public class Round {
     public void setNodeID(int nodeID) {
         this.nodeID = nodeID;
     }
-    public int getRoundID() {
-        return RoundID;
+//    public int getRoundID() {
+//        return RoundID;
+//    }
+//    public void setRoundID(int roundID) {
+//        RoundID = roundID;
+//    }
+    public ProposalID getPrepareProposalID() {
+    	return prepareProposal.getProposalId();
     }
-    public void setRoundID(int roundID) {
-        RoundID = roundID;
+    public void setPrepareProposalID(ProposalID pi) {
+    	prepareProposal.setProposalId(pi);
     }
-    public Proposal getCurrentProposal() {
-        return currentProposal;
+    public Proposal getPrepareProposal() {
+        return prepareProposal;
     }
     public void setCurrentProposal(Proposal currentProposal) {
-        this.currentProposal = currentProposal;
+        this.prepareProposal = currentProposal;
     }
     public Accept getAcceptProposal() {
         return acceptProposal;
@@ -127,6 +131,16 @@ public class Round {
     public void increAcceptCount() {
         this.acceptCount = this.acceptCount + 1;
     }
+    /* if value is chosen in the promiseMap, return the chosen value */
+    public Entry getChosen() {
+    	Entry entry = null;
+    	for (Promise p: this.promiseMap.values()) {
+    		if(p.getAcceptedId().isChosen()) {
+    			return new Entry(-1, p.getAcceptedId(), p.getAcceptedId(), p.getacceptedValue());
+    		}
+    	}
+    	return entry;
+    }
     /**
      * Find max value corresponded to the promise with largest ID.
      * @return max value
@@ -168,4 +182,5 @@ public class Round {
     public void setLogId(int logId) {
     	this.logId = logId;
     }
+    
 }
