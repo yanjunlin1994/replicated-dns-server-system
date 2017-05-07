@@ -15,11 +15,16 @@ public class EntryWriter {
 	private static final int ENTRY_SIZE = new Entry(0).toByte().length;
 	private static final int PROPOSALID_SIZE = new ProposalID().toByte().length;
 	private static final int INT_BYTE_SIZE = 4;
-	private static final String FIRSTLINE = "minUnchosenLogId/proposalId/unAcceptedLogId  log id/minProposalId/acceptedProposalId/dns:ip" + System.getProperty("line.separator");
+//	private static final String FIRSTLINE = "minUnchosenLogId/proposalId/unAcceptedLogId  log id/minProposalId/acceptedProposalId/dns:ip" + System.getProperty("line.separator");
+	private static final String FIRSTLINE = "proposalId  log id/minProposalId/acceptedProposalId/dns:ip" + System.getProperty("line.separator");
 	private RandomAccessFile raf;
 	/* headcount is the length of meta data in file's head */
 //	private int headcount = FIRSTLINE.length() + System.getProperty("line.separator").length() + INT_BYTE_SIZE*2 + PROPOSALID_SIZE;
-	private int headcount = FIRSTLINE.length() + INT_BYTE_SIZE*2 + PROPOSALID_SIZE;
+//	private int headcount = FIRSTLINE.length() + INT_BYTE_SIZE*2 + PROPOSALID_SIZE;
+	private int headcount = FIRSTLINE.length() + PROPOSALID_SIZE;
+	private int minUnchosenLogId;
+	private int noMoreAcceptedLogId;
+	private HashMap<ProposalID, Set<Integer>> proposalIdMapToUnchosenLogId;
 	public EntryWriter(String filename, int node) throws IOException {
 		file = new File(filename);
 		if (!file.exists()) {
@@ -28,62 +33,85 @@ public class EntryWriter {
 			/* the first line */
 			raf.writeBytes(FIRSTLINE);
 			/* the unchosenLogId, default value: 0 */
-			raf.writeInt(0);
+//			raf.writeInt(0);
 			/* the proposalId, default value: 0.nodeId */
             raf.write(new ProposalID(node).toByte());
             /* the unAcceptedLogId. Initially the log is empty, and it doesn't accept anything */
-            raf.writeInt(0);
+//            raf.writeInt(0);
 //			raf.writeBytes(System.getProperty("line.separator"));
 			raf.close();
+			minUnchosenLogId = 0;
+			noMoreAcceptedLogId = 0;
+			proposalIdMapToUnchosenLogId = new HashMap<ProposalID, Set<Integer>>();
+		} else {
+			proposalIdMapToUnchosenLogId = new HashMap<ProposalID, Set<Integer>>();
+			initialSetParam();
 		}
 	}
-	public synchronized HashMap<ProposalID, Set<Integer>> getProposalIdMapToUnchosenLogId() {
-		HashMap<ProposalID, Set<Integer>> map = new HashMap<ProposalID, Set<Integer>>();
-		int noMoreAcceptedLogId = readNoMoreAcceptedLogId();
+	public int getMinUnchosenLogId() {
+		return minUnchosenLogId;
+	}
+	public int getNoMoreAcceptedLogId() {
+		return noMoreAcceptedLogId;
+	}
+	public HashMap<ProposalID, Set<Integer>> getProposalIdMapToUnchosenLogId() {
+		return proposalIdMapToUnchosenLogId;
+	}
+	public synchronized void initialSetParam() {
+		boolean first = true;
 		Entry entry = null;
-		for (int i = 0; i < noMoreAcceptedLogId; i++) {
+		int logNum = logNum();
+		for (int i = 0; i < logNum; i++) {
 			entry = read(i);
+			/* Set MinUnchosenLogId */
+			if (!entry.isChosen()) {
+				minUnchosenLogId = entry.getLogId();
+				first = false;
+			}
 			/* If the log is not chosen but has been accepted, add its id in the hashmap */
 			if (!entry.isChosen() && entry.getdns().hasAccepted()) {
-				if (!map.containsKey(entry.getAcceptedProposalId())) {
-					map.put(entry.getAcceptedProposalId(), new HashSet<Integer>());
+				if (!proposalIdMapToUnchosenLogId.containsKey(entry.getAcceptedProposalId())) {
+					proposalIdMapToUnchosenLogId.put(entry.getAcceptedProposalId(), new HashSet<Integer>());
 				}
-				map.get(entry.getAcceptedProposalId()).add(entry.getLogId());
+				proposalIdMapToUnchosenLogId.get(entry.getAcceptedProposalId()).add(entry.getLogId());
+			}
+			/* Set noMoreAcceptedLogId */
+			if (!entry.getdns().hasAccepted()) {
+				noMoreAcceptedLogId = entry.getLogId();
 			}
 		}
-		return map;
 	}
  	/**
 	 * Read the value of noMoreAcceptedLogId from the log.
 	 */
-	public synchronized int readNoMoreAcceptedLogId() {
-		try {
-			raf = new RandomAccessFile(file, "rw");
-			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE + PROPOSALID_SIZE);
-			int noMoreAcceptedLogId = raf.readInt();
-			return noMoreAcceptedLogId;
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return Integer.MAX_VALUE;
-	}
+//	public synchronized int readNoMoreAcceptedLogId() {
+//		try {
+//			raf = new RandomAccessFile(file, "rw");
+//			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE + PROPOSALID_SIZE);
+//			int noMoreAcceptedLogId = raf.readInt();
+//			return noMoreAcceptedLogId;
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//		return Integer.MAX_VALUE;
+//	}
 	/**
 	 * Write the noMoreAcceptedLogId to log.
 	 */
-	public synchronized void writeNoMoreAcceptedLogId(int id) {
-		try {
-			raf = new RandomAccessFile(file, "rw");
-			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE + PROPOSALID_SIZE);
-			raf.writeInt(id);
-			raf.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+//	public synchronized void writeNoMoreAcceptedLogId(int id) {
+//		try {
+//			raf = new RandomAccessFile(file, "rw");
+//			raf.seek(FIRSTLINE.length() + INT_BYTE_SIZE + PROPOSALID_SIZE);
+//			raf.writeInt(id);
+//			raf.close();
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
 	public synchronized ProposalID readProposalId() {
 		try {
 			raf = new RandomAccessFile(file, "rw");
@@ -111,32 +139,32 @@ public class EntryWriter {
 			e.printStackTrace();
 		}
 	}
-	public synchronized void writeMinUnchosenLogId(int id) {
-		try {
-			raf = new RandomAccessFile(file, "rw");
-			raf.seek(FIRSTLINE.length());
-			raf.writeInt(id);;
-			raf.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	public synchronized int readMinUnchosenLogId() {
-		try {
-			raf = new RandomAccessFile(file, "rw");
-			raf.seek(FIRSTLINE.length());
-			int minUnchosenLogId = raf.readInt();
-			raf.close();
-			return minUnchosenLogId;
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return -1;
-	}
+//	public synchronized void writeMinUnchosenLogId(int id) {
+//		try {
+//			raf = new RandomAccessFile(file, "rw");
+//			raf.seek(FIRSTLINE.length());
+//			raf.writeInt(id);;
+//			raf.close();
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
+//	public synchronized int readMinUnchosenLogId() {
+//		try {
+//			raf = new RandomAccessFile(file, "rw");
+//			raf.seek(FIRSTLINE.length());
+//			int minUnchosenLogId = raf.readInt();
+//			raf.close();
+//			return minUnchosenLogId;
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//		return -1;
+//	}
 	/**
 	 * read Entry object from dnsFile.
 	 */
@@ -154,8 +182,7 @@ public class EntryWriter {
 			raf.seek(target);
 			int filelength = (int) file.length();
 			if (target >= filelength) {
-				System.out.println("[EntryWriter read] Reach the end of the file, this is log: " + logId);
-				System.out.println("\t\t1");
+//				System.out.println("[EntryWriter read] Reach the end of the file, this is log: " + logId);
 				entry = new Entry(logId);
 				write(entry);
 			} else {
@@ -165,10 +192,10 @@ public class EntryWriter {
 				} else {
 					/* If it is an totally empty entry: all 0s, return empty dns Entry */
 					if (Arrays.equals(byteArray, new byte[ENTRY_SIZE])) {
-						System.out.println("\t\t2");
+//						System.out.println("\t\t2");
 						return new Entry(0);
 					}
-					System.out.println("logId:" + logId + ", byte size: " + byteArray.length + ", ENTRY_SIZE: " + ENTRY_SIZE);
+//					System.out.println("logId:" + logId + ", byte size: " + byteArray.length + ", ENTRY_SIZE: " + ENTRY_SIZE);
 					entry = new Entry(byteArray);
 				}
 			}
@@ -197,7 +224,7 @@ public class EntryWriter {
 			int target = headcount + logId * ENTRY_SIZE;
 			raf.seek(target);
 			raf.write(entry.toByte());
-			System.out.println("\twrite log at: " + target + ", " + entry+". Size: " + entry.toByte().length);
+//			System.out.println("\twrite log at: " + target + ", " + entry+". Size: " + entry.toByte().length);
 			raf.close();
 		} catch (IOException e) {
 			e.printStackTrace();

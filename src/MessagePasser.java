@@ -35,7 +35,10 @@ public class MessagePasser {
         this.LeaderMpCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.AcceptorListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         this.electionContent = new ElectionContent();
-
+        /* Initial leader election */
+        this.currentLeader.setID(1);
+        /* What does setStatus mean */
+        this.currentLeader.setStatus(1);
         try {
             this.listener = new ListenerImpl(this.myConfig, this.me, this.currentLeader,
                             this.AcceptorListenerCommQueue, this.LeaderListenerCommQueue, this.electionContent);
@@ -56,10 +59,6 @@ public class MessagePasser {
         TimeUnit.SECONDS.sleep(10); //wait for other DNS replicas join in
         this.myConfig.updateListenerIntfMap(this.myID);
         TimeUnit.SECONDS.sleep(8);
-        /* Initial leader election */
-        this.currentLeader.setID(1);
-        /* What does setStatus mean */
-        this.currentLeader.setStatus(1);
 //        this.LeaderElectionSection();
         TimeUnit.SECONDS.sleep(2);
         InterThreadMessage msg = null;

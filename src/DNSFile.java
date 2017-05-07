@@ -19,9 +19,9 @@ public class DNSFile {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		minUnchosenLogId = er.readMinUnchosenLogId();
+		minUnchosenLogId = er.getMinUnchosenLogId();
 		proposalId = er.readProposalId();
-		noMoreAcceptedLogId = er.readNoMoreAcceptedLogId();
+		noMoreAcceptedLogId = er.getNoMoreAcceptedLogId();
 		this.proposalIdMapToUnchosenLogId = er.getProposalIdMapToUnchosenLogId();
 		proposalIdMapToUnchosenLogId.forEach((proposalId, set)-> {
 			set.forEach(logId -> {
@@ -69,7 +69,7 @@ public class DNSFile {
 		if (log >= noMoreAcceptedLogId) {
 			noMoreAcceptedLogId = log + 1;
 		}
-		er.writeNoMoreAcceptedLogId(noMoreAcceptedLogId);
+//		er.writeNoMoreAcceptedLogId(noMoreAcceptedLogId);
 	}
 	/* -------------- operations about proposalId ------------- */
 	public synchronized ProposalID getProposalId() {
@@ -86,7 +86,7 @@ public class DNSFile {
 	/* -------------- operations about minUnchosenLogId ------------ */
 	public synchronized void setMinUnchosenLogId(int id) {
 		this.minUnchosenLogId = id;
-		er.writeMinUnchosenLogId(id);
+//		er.writeMinUnchosenLogId(id);
 	}
 	public synchronized int getMinUnchosenLogId() {
 //		System.out.println("[get MinUnchosenLogId] " + minUnchosenLogId);
@@ -102,7 +102,7 @@ public class DNSFile {
 				minUnchosenLogId += 1;
 			}
 		}
-		er.writeMinUnchosenLogId(minUnchosenLogId);
+//		er.writeMinUnchosenLogId(minUnchosenLogId);
 //		System.out.println("[update MinUnchosenLogId] " + minUnchosenLogId);
 	}
 	/**

@@ -34,7 +34,7 @@ public class Configuration {
         //-------------nodes-----------
         List<HashMap<Integer, Object>> nodes = (List<HashMap<Integer, Object>> )data.get("configuration");
         for (HashMap<Integer, Object> node : nodes) {
-        	System.out.println("[config] node: " + node);
+//        	System.out.println("[config] node: " + node);
             Node newNode = new Node((int)node.get("id"), (String)node.get("ip"),
                                     (int)node.get("port"));
             this.nodeMap.put((int)node.get("id"),newNode); //put node in nodemap   

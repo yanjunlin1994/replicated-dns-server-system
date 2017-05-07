@@ -48,7 +48,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
     @Override
     public synchronized String clientRequest(DNSEntry dnsentry) throws RemoteException {
         String response;
-        System.out.println("[Recieve clientRequest] " + dnsentry);
+//        System.out.println("[Recieve clientRequest] " + dnsentry);
         if (me.getNodeID() == this.currentLeader.getID()) {
         	/* Once receiving a new request, leader adds the request into the processQueue. */
             response = "[ I am leader, I can handle this request]"; 
@@ -61,7 +61,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
             } else {
             	/* If client sends request to the acceptor, acceptor forward the request to leader. */
             	response = "[ I am not leader, I will forward your request to the leader " + this.currentLeader.getID() + "]";
-            	System.out.println(response);
+//            	System.out.println(response);
             	myConfig.getListenerIntfMap().get(currentLeader.getID()).clientRequest(dnsentry);
             }
         }
@@ -86,9 +86,9 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         	realPromise = true;
         	/* slave updates the minProposalId in the entry */
         	dnsfile.writeEntry(entry);
-        	System.out.println("[Acpt receive Prepare] PROMISE. proposal: " + p + ", entry:" + entry);
+//        	System.out.println("[Acpt receive Prepare] PROMISE. proposal: " + p + ", entry:" + entry);
         } else {
-        	System.out.println("[Acpt receive Preparel NO promise. proposalId " + p.getProposalId() +" smaller than original: " + entry.getMinProposalId() + ", entry:" + entry);
+//        	System.out.println("[Acpt receive Preparel NO promise. proposalId " + p.getProposalId() +" smaller than original: " + entry.getMinProposalId() + ", entry:" + entry);
         }
         Promise pro = null;
         /* If the proposal's log entry is larger than node's noMoreAcceptedLogId, then noMoreAcceptedValue is set to true */
@@ -102,7 +102,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
      */
     @Override
     public synchronized Acknlg LeaderAcceptProposal(Accept a) throws RemoteException {
-        System.out.println("[Recieve LeaderAcceptProposal] " + a);
+//        System.out.println("[Recieve LeaderAcceptProposal] " + a);
         DNSFile dnsfile = me.getDnsfile();
         /* Entry object entry is at logId */
         Entry entry = dnsfile.readEntry(a.getLogId()), unchosenEntry = null;
@@ -115,7 +115,7 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
         if (map.containsKey(a.getProposalID())) {
 	        for (Integer unchosenLog : map.get(a.getProposalID())) {
 	        	if (unchosenLog < a.getFirstUnchosenLogId()) {
-	        		System.out.println("[LeaderAcceptProposal] validate log " + unchosenLog + " by accept: " + a);
+//	        		System.out.println("[LeaderAcceptProposal] validate log " + unchosenLog + " by accept: " + a);
 	        		/* set the entry to be chosen */
 	        		unchosenEntry = this.me.getDnsfile().readEntry(unchosenLog);
 	        		unchosenEntry.setChosen();
@@ -142,10 +142,10 @@ public class ListenerImpl extends UnicastRemoteObject implements ListenerIntf{
             ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), true);
             /* add the unchosen log into proposalIdToUnchosenLogId map */
             this.me.getDnsfile().addToMap(a.getProposalID(), a.getLogId());
-            System.out.println("[Recieve LeaderAcceptProposal ACK! ] "+ ack + ", accept:" + a + ", entry: " + entry);
+//            System.out.println("[Recieve LeaderAcceptProposal ACK! ] "+ ack + ", accept:" + a + ", entry: " + entry);
         } else {
             ack = new Acknlg(this.me.getNodeID(), entry.getMinProposalId(), false);
-            System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack + ", accept:" + a + ", entry: " + entry);
+//            System.out.println("[Recieve LeaderAcceptProposal no ack ]" + ack + ", accept:" + a + ", entry: " + entry);
         }
 //        System.out.println("[return leaderAcceptProposal]");
         return ack;

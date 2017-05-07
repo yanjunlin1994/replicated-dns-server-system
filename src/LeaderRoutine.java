@@ -27,6 +27,7 @@ public class LeaderRoutine implements Runnable {
     private HashSet<Integer> noMoreAcceptedValueSet;
     private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
     private BlockingQueue<InterThreadMessage> LeaderMpCommQueue;
+    private Stopwatch stopwatch;
     
     public LeaderRoutine(int id, Configuration myConfig, Leader currentL, BlockingQueue<InterThreadMessage> m) {
         this.myID = id;
@@ -39,11 +40,13 @@ public class LeaderRoutine implements Runnable {
         noMoreAcceptedValueSet = new HashSet<Integer>();
         LeaderListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
         LeaderMpCommQueue = m;
+        
     }
     @Override
     public void run(){
         /* start dealing with proposal */
 //        System.out.println("[ProposerRoutine start running]");
+    	boolean first = true;
         STATE state;
         Proposal np = null;
         DNSEntry dnsentry = null;
@@ -51,6 +54,10 @@ public class LeaderRoutine implements Runnable {
         leaderHB.start();
         while (true) {
             if (this.currentLeader.getProcessQueueSize() > 0) {
+            	if (first) {
+            		stopwatch = new Stopwatch();
+            		first = false;
+            	}
                 try {
                 	state = STATE.NEW_PROPOSAL;
                 	while (state != STATE.SUCCEED) {
@@ -108,7 +115,7 @@ public class LeaderRoutine implements Runnable {
                 		}
                 		
                 	}
-                	System.out.println("Prepare:" + this.paxosPrepareRound + ", userRequest: " + this.userRequest + ", validate: " + this.validateRound);
+                	System.out.println("Prepare:" + this.paxosPrepareRound + ", userRequest: " + this.userRequest + ", validate: " + this.validateRound + ", time: " + stopwatch.elapsedTime());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -137,7 +144,7 @@ public class LeaderRoutine implements Runnable {
     public void SetNewRoundParam(Proposal np) {
         this.currentRound = new Round(myID, np.getProposalId().getRoundId(), np.getLogId());
         this.currentRound.setCurrentProposal(np);    
-        System.out.println("[LR.setNewRound] proposal: " + np);
+//        System.out.println("[LR.setNewRound] proposal: " + np);
     }
     //------------------- prepare -----------------------
     /**
@@ -153,7 +160,7 @@ public class LeaderRoutine implements Runnable {
             	/* Leader receive the promise from slaves */
                 Promise aPromise = lisnode.LeaderPrepareProposal(p);
                 this.currentRound.addPromiseMap(aPromise);// add to promise map
-                System.out.println("[LR.prepare] Recived: " + aPromise);
+//                System.out.println("[LR.prepare] Recived: " + aPromise);
                 if (aPromise.getIsIfrealPromise()) {
                 	/* If one node sends noMoreAccpetedValue, add the node into noMoreAcceptedValueSet */
                     if (aPromise.getNoMoreAcceptedValue()) {
@@ -214,7 +221,7 @@ public class LeaderRoutine implements Runnable {
     		/* If there is no prepare stage, in Accept proposal, just use its previous value */
     		accp = new Accept(this.currentRound.getLogId(), this.currentRound.getPrepareProposal().getProposalId(), this.currentRound.getPrepareProposal().getDnsentry(), this.me.getDnsfile().getMinUnchosenLogId());
     	}
-    	System.out.println("[LR.accept] Accept(): " + accp);
+//    	System.out.println("[LR.accept] Accept(): " + accp);
     	this.SetRoundAcceptParam(accp);
         this.BroadCastAccept(accp);
         /* Set Accept proposal in currentRound.acceptProposal */
@@ -236,7 +243,7 @@ public class LeaderRoutine implements Runnable {
             try {
                 Acknlg ack = lisnode.LeaderAcceptProposal(acp);
                 this.currentRound.addAcknlgMap(ack);// add to ack map
-                System.out.println("[LR.broadcastAccept] received: " + ack);
+//                System.out.println("[LR.broadcastAccept] received: " + ack);
                 if (ack.getisIfrealAcknlg()) {
                     this.currentRound.increAcceptCount();
                 } else {
@@ -290,7 +297,7 @@ public class LeaderRoutine implements Runnable {
         while (this.me.getDnsfile().getProposalId().Compare(RejMaxMinProposalID) <= 0) {
         	/* Each time increment the proposalID, store it in the dnsfile object */
         	this.currentRound.getPrepareProposalID().incrementProposalId();
-        	System.out.println(this.currentRound.getPrepareProposalID() + ", " + RejMaxMinProposalID);
+//        	System.out.println(this.currentRound.getPrepareProposalID() + ", " + RejMaxMinProposalID);
         }
         this.me.getDnsfile().setProposalId(this.currentRound.getPrepareProposalID());
         return this.me.getDnsfile().getProposalId();
