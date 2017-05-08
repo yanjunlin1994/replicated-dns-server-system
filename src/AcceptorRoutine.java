@@ -10,39 +10,59 @@ public class AcceptorRoutine implements Runnable {
     private long latestHeartbeat;
     private int leaderFailCount;
     private BlockingQueue<InterThreadMessage> AcceptorListenerCommQueue;
-    private BlockingQueue<InterThreadMessage> AcceptorMpCommQueue;
+    private BlockingQueue<InterThreadMessage> ElectionAcceptorCommQueue;
     private final int longestHeartBeatInterval = 10_000;
     private final int MaxLeaderFailureCount = 6;
     private int leaderID;
-    public AcceptorRoutine(int id, Configuration myConfig, BlockingQueue<InterThreadMessage> am, BlockingQueue<InterThreadMessage> al, int leaderID) {
+    private ListenerImpl listener;
+    private boolean inElection;
+    public AcceptorRoutine(int id, Configuration myConfig, BlockingQueue<InterThreadMessage> al, BlockingQueue<InterThreadMessage> LeaderListenerCommQueue, ListenerImpl listener) {
         this.myID = id;
         this.myConfig = myConfig;
         this.latestHeartbeat = 0;
         this.leaderFailCount = 0;
         this.AcceptorListenerCommQueue = al;
-        this.AcceptorMpCommQueue = am;
-        this.leaderID = leaderID;
+        this.ElectionAcceptorCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
+        leaderID = -1;
+        this.listener = listener;
+        inElection = false;
+        leaderElection();
     }
     @Override
     public synchronized void run() {
         System.out.println("[AR.run]");
+        InterThreadMessage msg; 
         while (true) {
-            if (this.checkHeartBeatExpire() != 0) {
-                this.increLeaderFailCount();
-                /* If there are multiple failures */
-                System.out.println("[AR] Leader fails for " + this.leaderFailCount + " times"); 
-                if (this.leaderFailCount > this.MaxLeaderFailureCount) {
-                    System.out.println("[AR] Leader failure maximum achieved"); 
-                    /* If there are too many timeouts between communication between leader and acceptor,
-                     *  the acceptor will try to elect a new leader */
-                    this.handleLeaderFailure();
-                    return;//kill thread
-                }  
-            }
+        	/* One leader elecition runs at one time */
+        	if (!inElection) {
+	            if (this.checkHeartBeatExpire() != 0) {
+	                this.increLeaderFailCount();
+	                /* If there are multiple failure
+	                 */
+	                System.out.println("[AR] Leader fails for " + this.leaderFailCount + " times");
+	                if (this.leaderFailCount > this.MaxLeaderFailureCount) {
+	                    System.out.println("[AR] Leader failure maximum achieved");
+	                    /* If there are too many timeouts between communication between leader and acceptor,
+	                     *  the acceptor will try to elect a new leader */
+	                    this.handleLeaderFailure();
+	                }  
+	            }
+        	}
             /* Get new heartbeat message from queue and update the latest heartbeat time */
             if (this.AcceptorListenerCommQueue.size() > 0) {
-                InterThreadMessage newMessage = this.AcceptorListenerCommQueue.poll();
-                this.processInterThreadMessage(newMessage);
+                msg = this.AcceptorListenerCommQueue.poll();
+                if (msg.getKind().equals("HeartBeatMessage") && msg.getSrc() == leaderID) {
+                    this.setLatestHeartbeat(System.currentTimeMillis()); 
+                }
+            }
+            if (this.ElectionAcceptorCommQueue.size() > 0) {
+            	msg = this.ElectionAcceptorCommQueue.poll();
+            	if (msg.getKind().equals("newLeader")) {
+	            	leaderID = Integer.valueOf(msg.getContent());
+	            	System.out.println("[AR.new leader] " + leaderID);
+            	}
+            	inElection = false;
+            	this.leaderFailCount = 0;
             }
             /* sleep for 2 seconds for efficiency */
             try {
@@ -50,15 +70,7 @@ public class AcceptorRoutine implements Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
-    }
-    /**
-     * Process the newly coming message in message queue.
-     * @param newM If it is a heartbeat message from its leader, update the latest hearbeat time.
-     */
-    public synchronized void processInterThreadMessage(InterThreadMessage newM) {
-        if (newM.getKind().equals("HeartBeatMessage") && newM.getSrc() == leaderID) {
-            this.setLatestHeartbeat(System.currentTimeMillis()); 
+            
         }
     }
     public void setLeaderID(int leaderID) {
@@ -80,11 +92,10 @@ public class AcceptorRoutine implements Runnable {
      * @return
      */
     public int handleLeaderFailure() {
-        System.out.println("[AR.handle failure]"); 
-        InterThreadMessage lf= new InterThreadMessage(this.myID, this.myID, 
-                                   "leaderElection", "leaderElection", -1);
-        /* Add a 'leader fail' message into the AcceptorMpCommQueue, to notify the messagePasser process */
-        this.AcceptorMpCommQueue.add(lf);
+        System.out.println("[AR.handle failure]");
+        this.listener.unchosenLeader();
+        /* start to elect leader */
+        leaderElection();
         return 0;
     }
     public long getLatestHeartbeat() {
@@ -101,5 +112,10 @@ public class AcceptorRoutine implements Runnable {
     }
     public void increLeaderFailCount() {
         this.leaderFailCount = this.leaderFailCount + 1;
-    }  
+    }
+    public void leaderElection() {
+    	System.out.println("[AR.leaderElection]");
+    	inElection = true;
+    	new Thread(new RequestLeader(myID, myConfig, this.ElectionAcceptorCommQueue)).start();
+    }
 }

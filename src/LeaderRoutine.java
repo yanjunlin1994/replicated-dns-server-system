@@ -3,8 +3,6 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.HashSet;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 public class LeaderRoutine implements Runnable {
 	
 	private enum STATE {
@@ -25,11 +23,11 @@ public class LeaderRoutine implements Runnable {
     private boolean skipPrepare;
     /* Include the node Id of the nodes which has no more accepted value beyond current log id */
     private HashSet<Integer> noMoreAcceptedValueSet;
-    private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
-    private BlockingQueue<InterThreadMessage> LeaderMpCommQueue;
+//    private BlockingQueue<InterThreadMessage> LeaderListenerCommQueue;
+//    private BlockingQueue<InterThreadMessage> LeaderMpCommQueue;
     private Stopwatch stopwatch;
     
-    public LeaderRoutine(int id, Configuration myConfig, Leader currentL, BlockingQueue<InterThreadMessage> m) {
+    public LeaderRoutine(int id, Configuration myConfig, Leader currentL) {
         this.myID = id;
         this.myConfig = myConfig;   
         this.currentLeader = currentL;
@@ -38,8 +36,7 @@ public class LeaderRoutine implements Runnable {
         /* Initially, skip is set to false and noMoreAcceptedSet is empty */
         this.skipPrepare = false;
         noMoreAcceptedValueSet = new HashSet<Integer>();
-        LeaderListenerCommQueue = new LinkedBlockingQueue<InterThreadMessage>();
-        LeaderMpCommQueue = m;
+//        this.LeaderListenerCommQueue = LeaderListenerCommQueue;
         
     }
     @Override
@@ -130,7 +127,7 @@ public class LeaderRoutine implements Runnable {
         /* The dnsfile.proposalId is set propoerly right now. */
         np.setDnsentry(p.getDnsentry());
         /* Start with a smallest ProposalID */
-        np.setProposalId(new ProposalID(myID));
+        np.setProposalId(me.getDnsfile().getProposalId());
         /* The dnsfile.minUnchosenLogId is set propoerly right now. Use it to set logId */
         np.setLogId(me.getDnsfile().getMinUnchosenLogId());
 //        System.out.println("[LR.ReceiveNewProposal] new proposal " + np);
@@ -143,7 +140,7 @@ public class LeaderRoutine implements Runnable {
      */
     public void SetNewRoundParam(Proposal np) {
         this.currentRound = new Round(myID, np.getProposalId().getRoundId(), np.getLogId());
-        this.currentRound.setCurrentProposal(np);    
+        this.currentRound.setPrepareProposal(np);    
 //        System.out.println("[LR.setNewRound] proposal: " + np);
     }
     //------------------- prepare -----------------------

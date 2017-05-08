@@ -64,7 +64,7 @@ public class EntryWriter {
 		for (int i = 0; i < logNum; i++) {
 			entry = read(i);
 			/* Set MinUnchosenLogId */
-			if (!entry.isChosen()) {
+			if (first && !entry.isChosen()) {
 				minUnchosenLogId = entry.getLogId();
 				first = false;
 			}

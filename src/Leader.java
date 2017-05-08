@@ -1,34 +1,19 @@
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Property of a leader
  * 
  *
  */
-public class Leader {
-    private int status;
-    private int ID;
+public class Leader extends UnicastRemoteObject implements LeaderIntf {
+	private static final long serialVersionUID = -8997057463677705808L;
+	private int ID;
     private Queue<Proposal> processQueue;
-    public Leader () {
-        this.status = -1;
-        this.ID = -1;
-        this.processQueue = new LinkedBlockingQueue<Proposal>();
-    }
-    public Leader (int lid) {
-        this.status = -1;
+    public Leader (int lid) throws RemoteException {
         this.ID = lid;
-    }
-    public int getStatus() {
-        return this.status;
-    }
-    public void setStatus(int status) {
-        this.status = status;
-    }
-    public int getID() {
-        return this.ID;
-    }
-    public void setID(int iD) {
-        this.ID = iD;
+        processQueue = new ConcurrentLinkedQueue<Proposal>();
     }
     public int getProcessQueueSize() {
         if (this.processQueue == null) {
@@ -36,19 +21,12 @@ public class Leader {
         }
         return this.processQueue.size();
     }
+    @Override
     public void addNewProposal(Proposal p) {
         this.processQueue.offer(p);  
     }
     public Proposal pollProposal() {
         return this.processQueue.poll();
-    }
-    /**
-     * clean the informaton in leader
-     */
-    public void clean() {
-        this.status = -1;
-        this.ID = -1;
-        this.processQueue.clear();
     }
     @Override
     public String toString() { 

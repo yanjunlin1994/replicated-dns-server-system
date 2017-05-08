@@ -56,7 +56,7 @@ public class Round {
     public Proposal getPrepareProposal() {
         return prepareProposal;
     }
-    public void setCurrentProposal(Proposal currentProposal) {
+    public void setPrepareProposal(Proposal currentProposal) {
         this.prepareProposal = currentProposal;
     }
     public Accept getAcceptProposal() {
@@ -158,10 +158,10 @@ public class Round {
     		}
     	}
     	if (maxsrc == -1) {
-    		System.out.println("[Round Class] [findPromiseMaxIDValue] no accept dnsEntry ");
+    		System.out.println("[Round] [findPromiseMaxIDValue] no accept dnsEntry ");
     		return new DNSEntry();
     	} else {
-    	    System.out.println("[Round Class] [findPromiseMaxIDValue] value is: " +
+    	    System.out.println("[Round] [findPromiseMaxIDValue] value is: " +
                     this.promiseMap.get(maxsrc).getacceptedValue());
 	        return this.promiseMap.get(maxsrc).getacceptedValue();     
     	}
